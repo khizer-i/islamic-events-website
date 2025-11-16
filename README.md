@@ -66,11 +66,10 @@ Create a `.env.local` file in the project root:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL= https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY= <your-anon-key>
-
+```
 Notes:
 - These are public keys intended for frontend usage.
 - Do not put the Supabase service role key here.
-```
 
 ## Running locally
 
