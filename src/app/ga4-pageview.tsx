@@ -1,21 +1,19 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export function GA4PageView() {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
 
     useEffect(() => {
         if (!pathname) return;
-        const url = pathname + (searchParams?.toString() ? `?${searchParams}` : "");
-        // Only fire if GA has been initialised
-        // @ts-ignore
+
+        // @ts-ignore – gtag is injected by GA4 script
         window.gtag?.("config", "G-B1ZKLRVV29", {
-            page_path: url,
+            page_path: pathname,
         });
-    }, [pathname, searchParams]);
+    }, [pathname]);
 
     return null;
 }
