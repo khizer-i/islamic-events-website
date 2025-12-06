@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import { GA4PageView } from "./ga4-pageview";
 
 const inter = Inter({
@@ -21,17 +22,28 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/*Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-B1ZKLRVV29"></script>
-        <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
 
-          gtag('config', 'G-B1ZKLRVV29');
-        </script>
+        {/* Google tag scripts */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-B1ZKLRVV29"
+        />
 
-        {/* Track SPA route changes */}
+        <Script
+          id="ga4-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-B1ZKLRVV29');
+            `,
+          }}
+        />
+
+
+        {/* Track route changes */}
         <GA4PageView />
 
         {children}
