@@ -5,13 +5,15 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
-import type { EventApi, EventInput } from "@fullcalendar/core";
+import type { EventApi, EventInput, MoreLinkArg } from "@fullcalendar/core";
 import enGbLocale from "@fullcalendar/core/locales/en-gb";
 import moment from "moment-hijri";
+
 
 type CalendarViewProps = {
     events: EventInput[];
     onEventClick?: (event: EventApi) => void;
+    onMoreClick?: (date: Date, events: EventApi[]) => void;
 };
 
 const HIJRI_MONTHS = [
@@ -29,10 +31,10 @@ const HIJRI_MONTHS = [
     "Dhu’l-H.",
 ];
 
-export default function CalendarView({ events, onEventClick }: CalendarViewProps) {
+export default function CalendarView({ events, onEventClick, onMoreClick }: CalendarViewProps) {
     return (
         <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-            <div className="p-3 md:p-4">
+            <div className="fc-wrap">
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
                     initialView="dayGridMonth"
@@ -151,6 +153,15 @@ export default function CalendarView({ events, onEventClick }: CalendarViewProps
                     eventClick={(info) => {
                         info.jsEvent.preventDefault();
                         onEventClick?.(info.event);
+                    }}
+                    moreLinkClick={(arg: MoreLinkArg) => {
+                        // If parent didn’t provide a handler, keep FullCalendar’s default behaviour
+                        if (!onMoreClick) return "popover";
+
+                        const dayEvents = arg.allSegs.map((seg) => seg.event); // events for that day
+                        onMoreClick(arg.date, dayEvents);
+
+                        return "none"; // prevents the default bottom popover/modal
                     }}
                 />
             </div>

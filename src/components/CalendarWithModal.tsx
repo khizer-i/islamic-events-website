@@ -38,8 +38,25 @@ export default function CalendarWithModal({
     const [selectedCity, setSelectedCity] = useState("ALL");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+    const [dayListOpen, setDayListOpen] = useState(false);
+    const [dayListDate, setDayListDate] = useState<Date | null>(null);
+    const [dayListEvents, setDayListEvents] = useState<EventApi[]>([]);
+
     const handleEventClick = (event: EventApi) => setSelectedEvent(event);
     const closeModal = () => setSelectedEvent(null);
+
+    const handleMoreClick = (date: Date, dayEvents: EventApi[]) => {
+        // Sort by start time
+        const sorted = [...dayEvents].sort((a, b) => {
+            const aT = a.start?.getTime() ?? 0;
+            const bT = b.start?.getTime() ?? 0;
+            return aT - bT;
+        });
+
+        setDayListDate(date);
+        setDayListEvents(sorted);
+        setDayListOpen(true);
+    };
 
     const filteredEvents: EventInput[] = events.filter((ev) => {
         const ext = (ev as EventInput).extendedProps as
@@ -123,7 +140,80 @@ export default function CalendarWithModal({
                 }}
             />
 
-            <CalendarView events={filteredEvents} onEventClick={handleEventClick} />
+            <CalendarView events={filteredEvents} onEventClick={handleEventClick} onMoreClick={handleMoreClick} />
+            {dayListOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-2 py-4 sm:items-center sm:px-4 sm:py-8"
+                    onClick={() => setDayListOpen(false)}
+                >
+                    <div
+                        className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                                    Events on this day
+                                </h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-300">
+                                    {dayListDate
+                                        ? dayListDate.toLocaleDateString("en-GB", {
+                                            weekday: "long",
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        })
+                                        : ""}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setDayListOpen(false)}
+                                className="cursor-pointer rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200 dark:bg-slate-800 dark:text-indigo-200 dark:hover:bg-slate-700"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="max-h-[70vh] overflow-y-auto">
+                            {dayListEvents.map((ev) => {
+                                const start = ev.start
+                                    ? ev.start.toLocaleTimeString("en-GB", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })
+                                    : "";
+
+                                return (
+                                    <button
+                                        key={ev.id}
+                                        type="button"
+                                        className="flex w-full items-start justify-between gap-3 border-b border-slate-200 px-4 py-3 text-left hover:bg-indigo-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                                        onClick={() => {
+                                            setSelectedEvent(ev);
+                                        }}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-50">
+                                                {ev.title}
+                                            </div>
+                                            <div className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                                                {start}
+                                            </div>
+                                        </div>
+
+                                        <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-slate-800 dark:text-indigo-200">
+                                            View
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             {selectedEvent && (

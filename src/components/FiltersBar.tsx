@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 type FiltersBarProps = {
     cities: string[];
     tags: string[];
@@ -19,6 +21,9 @@ export default function FiltersBar({
     onTagsChange,
     onReset,
 }: FiltersBarProps) {
+    const TAG_LIMIT = 16;
+    const [showAllTags, setShowAllTags] = useState(false);
+
     const toggleTag = (tag: string) => {
         if (selectedTags.includes(tag)) {
             onTagsChange(selectedTags.filter((t) => t !== tag));
@@ -32,6 +37,14 @@ export default function FiltersBar({
             .split(" ")
             .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
             .join(" ");
+
+    const visibleTags = useMemo(() => {
+        if (showAllTags) return tags;
+
+        const top = tags.slice(0, TAG_LIMIT);
+        const selectedOutsideTop = selectedTags.filter((t) => !top.includes(t));
+        return [...top, ...selectedOutsideTop];
+    }, [tags, selectedTags, showAllTags]);
 
     return (
         <section className="mb-3 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 md:mb-4 md:p-4">
@@ -61,7 +74,7 @@ export default function FiltersBar({
                         Tags
                     </label>
                     <div className="flex flex-wrap gap-1.5">
-                        {tags.map((tag) => {
+                        {visibleTags.map((tag) => {
                             const active = selectedTags.includes(tag);
                             return (
                                 <button
@@ -79,6 +92,15 @@ export default function FiltersBar({
                                 </button>
                             );
                         })}
+                        {tags.length > TAG_LIMIT && (
+                            <button
+                                type="button"
+                                onClick={() => setShowAllTags((v) => !v)}
+                                className="mt-2 inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200 dark:bg-slate-900 dark:text-indigo-200 dark:hover:bg-slate-800"
+                            >
+                                {showAllTags ? "Show fewer" : `Show more (${Math.max(0, tags.length - TAG_LIMIT)})`}
+                            </button>
+                        )}
                     </div>
                 </div>
 

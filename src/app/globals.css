@@ -201,4 +201,19 @@ body {
     color: #e5e7eb !important;
   }
 
+  /* Week view horizontal scroll (mobile) */
+  @media (max-width: 640px) {
+    .fc-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* only force width in timeGrid (week/day) */
+    .fc .fc-timeGridWeek-view,
+    .fc .fc-timeGridDay-view {
+      min-width: 900px;
+      /* tweak */
+    }
+  }
+
 }
