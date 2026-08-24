@@ -2,11 +2,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { EventApi, EventInput } from "@fullcalendar/core";
 import moment from "moment-hijri";
 
 import CalendarView from "./CalendarView";
 import FiltersBar from "./FiltersBar";
+import ShareButtons from "./ShareButtons";
+
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
+).replace(/\/+$/, "");
 
 type CalendarWithModalProps = {
     events: EventInput[];
@@ -106,6 +112,9 @@ export default function CalendarWithModal({
     const tagsList = selectedEvent?.extendedProps?.tags as string[] | undefined;
     const notes = selectedEvent?.extendedProps?.notes as string | undefined;
     const caption = selectedEvent?.extendedProps?.caption as string | undefined;
+    const slug = selectedEvent?.extendedProps?.slug as string | undefined;
+    const siteOrigin =
+        typeof window !== "undefined" ? window.location.origin : SITE_URL;
 
     const formatTagLabel = (tag: string) =>
         tag
@@ -313,7 +322,24 @@ export default function CalendarWithModal({
                         </div>
 
                         {/* Footer */}
-                        <div className="flex justify-end border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                {slug && (
+                                    <>
+                                        <Link
+                                            href={`/events/${slug}`}
+                                            className="rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:text-slate-200 dark:hover:text-indigo-300"
+                                        >
+                                            Event page
+                                        </Link>
+                                        <ShareButtons
+                                            url={`${siteOrigin}/events/${slug}`}
+                                            title={title}
+                                        />
+                                    </>
+                                )}
+                            </div>
+
                             <button
                                 onClick={closeModal}
                                 className="cursor-pointer rounded-full bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 dark:bg-indigo-400 dark:text-slate-900 dark:hover:bg-indigo-300"

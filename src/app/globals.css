@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Light mode base colours */
+/* Base tokens (kept minimal; body styles below are the real source of truth) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -13,7 +13,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* -------- LIGHT MODE -------- */
+/* -------- GLOBAL BASE -------- */
+html,
+body {
+  height: 100%;
+}
+
 body {
   background-color: #f8fafc;
   /* slate-50 */
@@ -22,198 +27,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* FullCalendar base */
-.fc {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 0.85rem;
-}
-
-/* Toolbar */
-.fc .fc-toolbar.fc-header-toolbar {
-  margin-bottom: 0.75rem;
-}
-
-.fc .fc-toolbar-title {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Buttons: Month / Week / List / arrows / Today */
-.fc .fc-button {
-  padding: 0.15rem 0.7rem;
-  border-radius: 9999px;
-  border: none;
-  font-size: 0.75rem;
-  font-weight: 500;
-  background-color: #e0e7ff;
-  /* indigo-100 */
-  color: #4f46e5;
-  /* indigo-600 */
-}
-
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active,
-.fc .fc-button-primary:not(:disabled):hover {
-  background-color: #4f46e5;
-  /* indigo-600 */
-  color: #ffffff;
-  box-shadow: none;
-}
-
-/* Header cells */
-.fc .fc-col-header-cell {
-  padding: 0.25rem 0;
-  font-weight: 500;
-}
-
-/* Grid borders */
-.fc-theme-standard td,
-.fc-theme-standard th {
-  border-color: rgba(148, 163, 184, 0.5);
-  /* slate-400/50 */
-}
-
-/* Event pills (month + week + list) */
-.fc .fc-daygrid-event,
-.fc .fc-timegrid-event,
-.fc .fc-list-event {
-  border-radius: 0.5rem;
-  border: none;
-  padding: 0.25rem 0.5rem;
-  background-color: #4f46e5 !important;
-  /* unified indigo pill */
-  color: #eef2ff !important;
-}
-
-/* Hover pills */
-.fc .fc-daygrid-event:hover,
-.fc .fc-timegrid-event:hover,
-.fc .fc-list-event:hover {
-  background-color: #6366f1 !important;
-  /* brighter indigo */
-}
-
-/* Today highlight */
-.fc .fc-day-today {
-  background-color: rgba(59, 130, 246, 0.08);
-  /* subtle blue */
-}
-
-/* Remove tiny dot before events */
-.fc .fc-daygrid-event-dot {
-  display: none;
-}
-
-/* Week-view event shape refinement */
-.fc .fc-timegrid-event {
-  border-radius: 0.5rem !important;
-  border: 1px solid #c7d2fe !important;
-  /* indigo-200 */
-}
-
-/* Cursors */
-.fc .fc-daygrid-event,
-.fc .fc-timegrid-event,
-.fc .fc-list-event {
-  cursor: pointer !important;
-}
-
-/* ---------------- DARK MODE ---------------- */
+/* Respect user's system dark mode preference */
 @media (prefers-color-scheme: dark) {
-
   body {
     background-color: #020617;
     /* slate-950 */
     color: #e5e7eb;
     /* slate-200 */
   }
-
-  /* Borders */
-  .fc-theme-standard td,
-  .fc-theme-standard th {
-    border-color: rgba(51, 65, 85, 0.8);
-    /* slate-700 */
-  }
-
-  /* Month + week headers */
-  .fc .fc-col-header-cell {
-    background-color: #020617 !important;
-    color: #e5e7eb !important;
-    border-color: rgba(51, 65, 85, 0.9) !important;
-  }
-
-  /* Today highlight in dark mode */
-  .fc .fc-day-today,
-  .fc .fc-timegrid-col.fc-day-today {
-    background-color: rgba(79, 70, 229, 0.16) !important;
-    /* indigo glow */
-  }
-
-  .fc .fc-col-header-cell.fc-day-today {
-    background-color: rgba(79, 70, 229, 0.3) !important;
-  }
-
-  /* Event pills in dark mode */
-  .fc .fc-daygrid-event,
-  .fc .fc-timegrid-event,
-  .fc .fc-list-event {
-    background-color: #4f46e5 !important;
-    /* indigo */
-    color: #e5e7eb !important;
-  }
-
-  /* Week-view borders */
-  .fc .fc-timegrid-event {
-    border-color: #4f46e5 !important;
-  }
-
-  /* Week view left time axis */
-  .fc .fc-timegrid-axis,
-  .fc .fc-timegrid-axis-frame,
-  .fc .fc-timegrid-axis-cushion {
-    background-color: #020617 !important;
-    color: #e5e7eb !important;
-    border-color: rgba(51, 65, 85, 0.9) !important;
-  }
-
-  /* ---- LIST VIEW FIX ---- */
-
-  /* Day headings */
-  .fc .fc-list-heading td,
-  .fc .fc-list-day-cushion {
-    background-color: #020617 !important;
-    color: #e5e7eb !important;
-    border-color: rgba(51, 65, 85, 0.9) !important;
-  }
-
-  /* Event rows */
-  .fc .fc-list-event td,
-  .fc .fc-list-event {
-    background-color: #0b1120 !important;
-    /* dark slate-900 */
-    color: #e5e7eb !important;
-  }
-
-  /* Hover rows */
-  .fc .fc-list-event:hover td {
-    background-color: #1e1b4b !important;
-    /* dark indigo hover */
-    color: #e5e7eb !important;
-  }
-
-  /* Week view horizontal scroll (mobile) */
-  @media (max-width: 640px) {
-    .fc-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* only force width in timeGrid (week/day) */
-    .fc .fc-timeGridWeek-view,
-    .fc .fc-timeGridDay-view {
-      min-width: 900px;
-      /* tweak */
-    }
-  }
-
 }

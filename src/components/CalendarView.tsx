@@ -120,36 +120,38 @@ export default function CalendarView({ events, onEventClick, onMoreClick }: Cale
                     }}
                     // Event styling: indigo, with pill vs block per view
                     eventClassNames={(arg) => {
-                        const base = [
-                            "!border-none",
+                        const common = [
+                            "cursor-pointer",
+                            "select-none",
+                            "transition-colors",
+                            "!border-0",
                             "!px-2",
                             "!py-1",
                             "text-xs",
                             "font-medium",
-                            "bg-indigo-100",
-                            "text-indigo-900",
-                            "dark:bg-indigo-900/40",
-                            "dark:text-indigo-100",
+                            "leading-tight",
                         ];
 
-                        // Month + list = pill
-                        if (arg.view.type === "dayGridMonth" || arg.view.type === "listWeek") {
-                            base.push("rounded-full");
+                        // LIST VIEW: do NOT paint the whole row
+                        if (arg.view.type === "listWeek") {
+                            return [...common, "!rounded-full"]; // keep rounded feel, no bg here
                         }
 
-                        // Week (time grid) = rectangular block
-                        if (arg.view.type === "timeGridWeek") {
-                            base.push("rounded-md");
-                        }
+                        // MONTH + WEEK: paint the pill/block here (source of truth for coloured events)
+                        const coloured = [
+                            "!bg-indigo-600",
+                            "!text-white",
+                            "hover:!bg-indigo-500",
+                            "dark:!bg-indigo-500",
+                            "dark:hover:!bg-indigo-400",
+                        ];
 
-                        return base;
+                        if (arg.view.type === "dayGridMonth") return [...common, ...coloured, "!rounded-full"];
+                        if (arg.view.type === "timeGridWeek") return [...common, ...coloured, "!rounded-md"];
+
+                        return [...common, ...coloured];
                     }}
-                    eventMouseEnter={(info) => {
-                        (info.el as HTMLElement).classList.add("shadow-sm");
-                    }}
-                    eventMouseLeave={(info) => {
-                        (info.el as HTMLElement).classList.remove("shadow-sm");
-                    }}
+
                     eventClick={(info) => {
                         info.jsEvent.preventDefault();
                         onEventClick?.(info.event);
@@ -163,6 +165,7 @@ export default function CalendarView({ events, onEventClick, onMoreClick }: Cale
 
                         return "none"; // prevents the default bottom popover/modal
                     }}
+                    eventDisplay="block"
                 />
             </div>
         </div>

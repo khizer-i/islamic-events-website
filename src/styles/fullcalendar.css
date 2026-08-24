@@ -1,0 +1,258 @@
+/* ================================
+   FullCalendar base
+================================ */
+.fc {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.85rem;
+}
+
+/* ================================
+   Toolbar
+================================ */
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0.75rem;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ================================
+   Buttons
+================================ */
+.fc .fc-button {
+    padding: 0.15rem 0.7rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: #e0e7ff;
+    /* indigo-100 */
+    color: #4f46e5;
+    /* indigo-600 */
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled):hover {
+    background-color: #4f46e5;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+/* ================================
+   Headers & grid
+================================ */
+.fc .fc-col-header-cell {
+    padding: 0.25rem 0;
+    font-weight: 500;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border-color: rgba(148, 163, 184, 0.5);
+    /* slate-400/50 */
+}
+
+/* ================================
+   Today highlight
+================================ */
+.fc .fc-day-today {
+    background-color: rgba(59, 130, 246, 0.08);
+}
+
+/* ================================
+   EVENTS
+   (visuals come from eventClassNames)
+================================ */
+.fc .fc-event {
+    cursor: pointer;
+}
+
+/* Let wrapper classes control colour & rounding */
+.fc .fc-event .fc-event-main,
+.fc .fc-event .fc-event-main-frame {
+    background: inherit !important;
+    color: inherit !important;
+    border-radius: inherit !important;
+}
+
+/* Consistent hover across views */
+.fc .fc-event:hover .fc-event-main,
+.fc .fc-event:hover .fc-event-main-frame {
+    background-color: rgba(99, 102, 241, 0.9);
+    /* indigo hover */
+}
+
+/* Remove dot in month view */
+.fc .fc-daygrid-event-dot {
+    display: none;
+}
+
+/* ================================
+   LIST VIEW — inherit page theme
+================================ */
+
+/* Day headings */
+.fc .fc-list-heading td,
+.fc .fc-list-day-cushion {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+
+/* Event rows inherit body background */
+.fc .fc-list-event td {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Subtle hover that adapts to theme */
+.fc .fc-list-event:hover td {
+    background-color: color-mix(in srgb, currentColor 6%, transparent) !important;
+}
+
+/* List dots */
+.fc .fc-list-event-dot {
+    border-color: #4f46e5;
+}
+
+/* ================================
+   Mobile week scroll
+================================ */
+@media (max-width: 640px) {
+    .fc-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fc .fc-timeGridWeek-view,
+    .fc .fc-timeGridDay-view {
+        min-width: 900px;
+    }
+}
+
+/* ================================
+   Dark mode refinements
+================================ */
+@media (prefers-color-scheme: dark) {
+
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: rgba(51, 65, 85, 0.8);
+    }
+
+    .fc .fc-col-header-cell {
+        background-color: #020617 !important;
+        color: #e5e7eb !important;
+        border-color: rgba(51, 65, 85, 0.9) !important;
+    }
+
+    .fc .fc-day-today,
+    .fc .fc-timegrid-col.fc-day-today {
+        background-color: rgba(79, 70, 229, 0.16) !important;
+    }
+
+    .fc .fc-col-header-cell.fc-day-today {
+        background-color: rgba(79, 70, 229, 0.3) !important;
+    }
+
+    .fc .fc-timegrid-axis,
+    .fc .fc-timegrid-axis-frame,
+    .fc .fc-timegrid-axis-cushion {
+        background-color: #020617 !important;
+        color: #e5e7eb !important;
+        border-color: rgba(51, 65, 85, 0.9) !important;
+    }
+
+    .fc .fc-list-event-title a {
+        background-color: #6366f1;
+        /* slightly brighter in dark */
+        color: #0b1120;
+    }
+
+    .fc .fc-list-event:hover .fc-list-event-title a {
+        background-color: #818cf8;
+    }
+
+    /* The table itself needs a dark paint, otherwise "transparent" shows white */
+    .fc .fc-list-table,
+    .fc .fc-list-table td,
+    .fc .fc-list-table th {
+        background-color: #020617 !important;
+        /* slate-950 */
+    }
+
+    /* Day header rows ("Monday", "Tuesday" etc.) */
+    .fc .fc-list-day,
+    .fc .fc-list-heading,
+    .fc .fc-list-day-cushion,
+    .fc .fc-list-heading td {
+        background-color: #020617 !important;
+        color: #e5e7eb !important;
+    }
+
+    /* Keep event rows neutral (pill link stays indigo) */
+    .fc .fc-list-event td {
+        background-color: transparent !important;
+    }
+}
+
+/* ===== LIST VIEW: stop event colour flooding the whole row ===== */
+
+/* The clickable "event" element in list view should NOT carry the pill bg */
+.fc .fc-list-event .fc-event {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+/* Make the cells match the page background */
+.fc .fc-list-event td,
+.fc .fc-list-heading td,
+.fc .fc-list-day-cushion {
+    background: transparent !important;
+    color: inherit !important;
+}
+
+/* Keep the pill look only on the inner content */
+.fc .fc-list-event .fc-event-main,
+.fc .fc-list-event .fc-event-main-frame {
+    background: inherit !important;
+    /* inherits from eventClassNames on wrapper */
+    border-radius: 9999px !important;
+    padding: 0.25rem 0.5rem;
+}
+
+/* ===== LIST VIEW: keep rows neutral, style only the title/time as a pill ===== */
+
+.fc .fc-list-event,
+.fc .fc-list-event td {
+    background: transparent !important;
+}
+
+/* The actual clickable title link */
+.fc .fc-list-event-title a {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    background-color: #4f46e5;
+    /* indigo-600 */
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* Time cell: make it look consistent */
+.fc .fc-list-event-time {
+    color: inherit;
+}
+
+/* Hover: don’t turn the whole row white; just brighten the pill */
+.fc .fc-list-event:hover td {
+    background: transparent !important;
+}
+
+.fc .fc-list-event:hover .fc-list-event-title a {
+    background-color: #6366f1;
+    /* indigo-500 */
+}
