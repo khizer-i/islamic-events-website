@@ -11,7 +11,7 @@ import { SITE_URL } from "@/lib/events";
 const CHANNELS = {
   whatsapp: null as string | null, // e.g. "447700900123" (no +, no spaces)
   telegram: null as string | null, // e.g. "islamiceventsukbot"
-  email: null as string | null, // e.g. "events@islamiceventscalendar.co.uk"
+  email: "events@islamiceventscalendar.co.uk" as string | null, // e.g. "events@islamiceventscalendar.co.uk"
   instagram: null as string | null, // e.g. "islamiceventscalendar"
 };
 
