@@ -60,10 +60,10 @@ export default async function CityPage({ params }: Props) {
   const months = groupByMonth(upcoming);
   const otherCities = (await getCitySummaries())
     .filter((c) => c.slug !== city.slug && c.upcoming > 0)
-    .slice(0, 12);
+    .slice(0, 14);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 dark:bg-slate-950 dark:text-slate-50 md:px-6">
+    <main className="mx-auto max-w-[860px] px-5 py-10 md:px-10 md:py-12">
       <JsonLd
         data={[
           eventListJsonLd(upcoming, `Islamic events in ${city.name}`),
@@ -75,77 +75,68 @@ export default async function CityPage({ params }: Props) {
         ]}
       />
 
-      <div className="mx-auto max-w-5xl">
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-4 text-xs text-slate-500 dark:text-slate-400"
-        >
-          <Link href="/" className="hover:text-indigo-600 hover:underline">
-            Home
-          </Link>
-          <span aria-hidden> › </span>
-          <Link href="/cities" className="hover:text-indigo-600 hover:underline">
-            Cities
-          </Link>
-          <span aria-hidden> › </span>
-          <span>{city.name}</span>
-        </nav>
+      <nav aria-label="Breadcrumb" className="mb-6 text-[12px] text-faint">
+        <Link href="/" className="hover:text-ink">
+          Home
+        </Link>
+        <span aria-hidden> / </span>
+        <Link href="/cities" className="hover:text-ink">
+          Cities
+        </Link>
+        <span aria-hidden> / </span>
+        <span>{city.name}</span>
+      </nav>
 
-        <header className="mb-6">
-          <h1 className="text-xl font-semibold md:text-2xl">
-            Islamic events in {city.name}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-            {upcoming.length > 0
-              ? `${upcoming.length} upcoming event${upcoming.length === 1 ? "" : "s"} in ${city.name}, taken from posters shared by the community.`
-              : `No upcoming events are listed in ${city.name} at the moment. Past events are shown below.`}
-          </p>
-        </header>
+      <h1 className="font-display text-[30px] font-medium leading-[1.1] tracking-[-0.6px] md:text-[38px]">
+        Islamic events in {city.name}
+      </h1>
+      <p className="mt-3 max-w-xl text-[14px] leading-[1.6] text-muted md:text-[15px]">
+        {upcoming.length > 0
+          ? `${upcoming.length} upcoming event${upcoming.length === 1 ? "" : "s"} in ${city.name}, taken from posters shared by the community.`
+          : `No upcoming events are listed in ${city.name} at the moment.`}
+      </p>
 
-        {months.map(([month, monthEvents]) => (
-          <section key={month} className="mb-8">
-            <h2 className="mb-3 border-b border-slate-200 pb-1 text-sm font-semibold dark:border-slate-800">
-              {month}
-            </h2>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {monthEvents.map((ev) => (
-                <EventCard key={ev.id} event={ev} />
-              ))}
-            </ul>
-          </section>
-        ))}
+      {months.map(([month, monthEvents]) => (
+        <section key={month} className="mt-11">
+          <h2 className="font-display text-[21px] font-medium tracking-[-0.3px]">
+            {month}
+          </h2>
+          <ul className="mt-3">
+            {monthEvents.map((ev) => (
+              <EventCard key={ev.id} event={ev} />
+            ))}
+          </ul>
+        </section>
+      ))}
 
-        {past.length > 0 ? (
-          <section className="mb-8">
-            <h2 className="mb-3 border-b border-slate-200 pb-1 text-sm font-semibold text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              Previously in {city.name}
-            </h2>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {past.slice(0, 12).map((ev) => (
-                <EventCard key={ev.id} event={ev} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
+      {past.length > 0 ? (
+        <section className="mt-14">
+          <h2 className="label">Previously in {city.name}</h2>
+          <ul className="mt-3 opacity-70">
+            {past.slice(0, 10).map((ev) => (
+              <EventCard key={ev.id} event={ev} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-        {otherCities.length > 0 ? (
-          <section>
-            <h2 className="mb-2 text-sm font-semibold">Other cities</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {otherCities.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={cityUrl(c.name)}
-                  className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-indigo-300"
-                >
-                  {c.name}
-                  <span className="ml-1 text-slate-400">{c.upcoming}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
+      {otherCities.length > 0 ? (
+        <section className="mt-14 border-t border-rule pt-8">
+          <h2 className="label">Other cities</h2>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {otherCities.map((c) => (
+              <Link
+                key={c.slug}
+                href={cityUrl(c.name)}
+                className="border border-rule px-3 py-1.5 text-[12px] text-muted transition-colors hover:border-rule-strong hover:text-ink"
+              >
+                {c.name}
+                <span className="ml-1.5 text-faint">{c.upcoming}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

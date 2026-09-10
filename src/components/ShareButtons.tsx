@@ -42,12 +42,12 @@ export default function ShareButtons({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex gap-2.5">
       <a
         href={whatsapp}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-emerald-700"
+        className="flex h-12 flex-1 items-center justify-center border border-rule-strong text-[14px] font-medium transition-colors hover:bg-paper-sunk"
       >
         Share on WhatsApp
       </a>
@@ -55,7 +55,7 @@ export default function ShareButtons({
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        className="flex h-12 flex-1 cursor-pointer items-center justify-center border border-rule-strong text-[14px] font-medium transition-colors hover:bg-paper-sunk"
       >
         {copied ? "Link copied" : "Copy link"}
       </button>

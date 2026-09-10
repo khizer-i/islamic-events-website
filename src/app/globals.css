@@ -1,38 +1,151 @@
 @import "tailwindcss";
 
-/* Base tokens (kept minimal; body styles below are the real source of truth) */
+/* ------------------------------------------------------------------ */
+/* Palette                                                             */
+/*                                                                     */
+/* Direction A: warm paper, ink, hairlines, one oxblood accent.        */
+/* Everything is a CSS variable so dark mode is a palette swap rather  */
+/* than a `dark:` class on every element.                              */
+/* ------------------------------------------------------------------ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #faf8f3;
+  --paper-sunk: #f1ede1;
+  --paper-raised: #ffffff;
+
+  --ink: #14130f;
+  --ink-soft: #2a2822;
+  --muted: #6b6558;
+  --faint: #8b8578;
+
+  --rule: #e9e4d8;
+  --rule-strong: #14130f;
+
+  --accent: #7b2e1e;
+  --accent-hover: #5b1f13;
+  --accent-contrast: #faf8f3;
+  --accent-wash: #f3e6e0;
+
+  --shade: #c2bba9;
+
+  /* Solid fills. Deliberately NOT --rule-strong: a hairline and a filled
+     button want the same value on paper and opposite values on dark. */
+  --fill: #14130f;
+  --fill-text: #faf8f3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* The paper design at night: a warm brown-black, never a neutral one,
+       and cream rather than white. */
+    --paper: #191512;
+    --paper-sunk: #221e19;
+    --paper-raised: #201b16;
+
+    --ink: #ede6d8;
+    --ink-soft: #d6cdbb;
+    --muted: #a09683;
+    --faint: #7d7466;
+
+    --rule: #2e2822;
+    --rule-strong: #4a433a;
+
+    /* Brass, not a lightened oxblood — lightening a deep red to clear
+       near-black is how it turns into a salmon. */
+    --accent: #c9a961;
+    --accent-hover: #ddbe7a;
+    --accent-contrast: #191512;
+    --accent-wash: #2a231a;
+
+    --shade: #6b6152;
+
+    /* Inverted against light: on a dark ground the strongest fill is a
+       light one. */
+    --fill: #ede6d8;
+    --fill-text: #191512;
+  }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-paper-raised: var(--paper-raised);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-wash: var(--accent-wash);
+
+  --color-shade: var(--shade);
+
+  --color-fill: var(--fill);
+  --color-fill-text: var(--fill-text);
+
+  --font-display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
 }
 
-/* -------- GLOBAL BASE -------- */
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+
 html,
 body {
   height: 100%;
 }
 
 body {
-  background-color: #f8fafc;
-  /* slate-50 */
-  color: #020617;
-  /* slate-950 */
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Respect user's system dark mode preference */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #020617;
-    /* slate-950 */
-    color: #e5e7eb;
-    /* slate-200 */
+/* Display face carries titles and dates; never body copy. */
+.font-display {
+  font-family: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+
+/* Small uppercase labels. Used sparingly, always with tracking. */
+.label {
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tabular figures wherever times and dates line up in a column. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

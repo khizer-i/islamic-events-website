@@ -9,7 +9,7 @@ export function GA4PageView() {
     useEffect(() => {
         if (!pathname) return;
 
-        // @ts-ignore – gtag is injected by GA4 script
+        // @ts-expect-error – gtag is injected by GA4 script
         window.gtag?.("config", "G-B1ZKLRVV29", {
             page_path: pathname,
         });

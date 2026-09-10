@@ -19,7 +19,7 @@ export default async function CitiesPage() {
   const quiet = cities.filter((c) => c.upcoming === 0);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 dark:bg-slate-950 dark:text-slate-50 md:px-6">
+    <main className="mx-auto max-w-[860px] px-5 py-10 md:px-10 md:py-12">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -27,65 +27,60 @@ export default async function CitiesPage() {
         ])}
       />
 
-      <div className="mx-auto max-w-4xl">
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-4 text-xs text-slate-500 dark:text-slate-400"
-        >
-          <Link href="/" className="hover:text-indigo-600 hover:underline">
-            Home
-          </Link>
-          <span aria-hidden> › </span>
-          <span>Cities</span>
-        </nav>
+      <nav aria-label="Breadcrumb" className="mb-6 text-[12px] text-faint">
+        <Link href="/" className="hover:text-ink">
+          Home
+        </Link>
+        <span aria-hidden> / </span>
+        <span>Cities</span>
+      </nav>
 
-        <h1 className="text-xl font-semibold md:text-2xl">
-          Islamic events by city
-        </h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Pick a city to see what is coming up near you.
-        </p>
+      <h1 className="font-display text-[30px] font-medium leading-[1.1] tracking-[-0.6px] md:text-[38px]">
+        Islamic events by city
+      </h1>
+      <p className="mt-3 text-[14px] text-muted md:text-[15px]">
+        Pick a city to see what is coming up near you.
+      </p>
 
-        {active.length > 0 ? (
-          <section className="mt-6">
-            <h2 className="mb-3 text-sm font-semibold">With upcoming events</h2>
-            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {active.map((city) => (
-                <li key={city.slug}>
-                  <Link
-                    href={cityUrl(city.name)}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-500"
-                  >
-                    <span>{city.name}</span>
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
-                      {city.upcoming}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {quiet.length > 0 ? (
-          <section className="mt-8">
-            <h2 className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400">
-              Nothing upcoming right now
-            </h2>
-            <div className="flex flex-wrap gap-1.5">
-              {quiet.map((city) => (
+      {active.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="label">With upcoming events</h2>
+          <ul className="mt-4 grid gap-x-8 sm:grid-cols-2">
+            {active.map((city) => (
+              <li key={city.slug}>
                 <Link
-                  key={city.slug}
                   href={cityUrl(city.name)}
-                  className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:text-slate-300 dark:hover:text-indigo-300"
+                  className="flex items-baseline justify-between gap-4 border-t border-rule py-3.5 transition-colors hover:text-accent"
                 >
-                  {city.name}
+                  <span className="font-display text-[18px] font-medium">
+                    {city.name}
+                  </span>
+                  <span className="tnum text-[13px] text-faint">
+                    {city.upcoming}
+                  </span>
                 </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {quiet.length > 0 ? (
+        <section className="mt-12">
+          <h2 className="label">Nothing upcoming right now</h2>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {quiet.map((city) => (
+              <Link
+                key={city.slug}
+                href={cityUrl(city.name)}
+                className="border border-rule px-3 py-1.5 text-[12px] text-muted transition-colors hover:border-rule-strong hover:text-ink"
+              >
+                {city.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

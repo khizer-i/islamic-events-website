@@ -32,7 +32,7 @@ export default async function EventsIndexPage() {
   const months = groupByMonth(events);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 dark:bg-slate-950 dark:text-slate-50 md:px-6">
+    <main className="mx-auto max-w-[860px] px-5 py-10 md:px-10 md:py-12">
       <JsonLd
         data={[
           eventListJsonLd(events, "Upcoming Islamic events in the UK"),
@@ -43,73 +43,63 @@ export default async function EventsIndexPage() {
         ]}
       />
 
-      <div className="mx-auto max-w-5xl">
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-4 text-xs text-slate-500 dark:text-slate-400"
-        >
-          <Link href="/" className="hover:text-indigo-600 hover:underline">
-            Home
-          </Link>
-          <span aria-hidden> › </span>
-          <span>Events</span>
-        </nav>
+      <nav aria-label="Breadcrumb" className="mb-6 text-[12px] text-faint">
+        <Link href="/" className="hover:text-ink">
+          Home
+        </Link>
+        <span aria-hidden> / </span>
+        <span>Upcoming</span>
+      </nav>
 
-        <header className="mb-6">
-          <h1 className="text-xl font-semibold md:text-2xl">
-            Upcoming Islamic events in the UK
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-            {events.length > 0
-              ? `${events.length} upcoming event${events.length === 1 ? "" : "s"} across ${cities.length} ${cities.length === 1 ? "city" : "cities"}, listed by month. Prefer a calendar view? `
-              : "No upcoming events are listed right now. "}
-            <Link
-              href="/"
-              className="text-indigo-700 hover:underline dark:text-indigo-300"
-            >
-              Open the calendar
-            </Link>
-            .
-          </p>
-        </header>
+      <h1 className="font-display text-[30px] font-medium leading-[1.1] tracking-[-0.6px] md:text-[38px]">
+        Upcoming Islamic events in the UK
+      </h1>
+      <p className="mt-3 max-w-xl text-[14px] leading-[1.6] text-muted md:text-[15px]">
+        {events.length > 0
+          ? `${events.length} upcoming event${events.length === 1 ? "" : "s"} across ${cities.length} ${cities.length === 1 ? "city" : "cities"}, listed by month.`
+          : "No upcoming events are listed right now."}{" "}
+        <Link href="/" className="text-accent hover:underline">
+          Open the calendar
+        </Link>
+        .
+      </p>
 
-        {cities.length > 0 ? (
-          <section className="mb-8">
-            <h2 className="mb-2 text-sm font-semibold">Browse by city</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {cities.map((city) => (
-                <Link
-                  key={city.slug}
-                  href={cityUrl(city.name)}
-                  className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-indigo-300"
-                >
-                  {city.name}
-                  <span className="ml-1 text-slate-400">{city.upcoming}</span>
-                </Link>
+      {cities.length > 0 ? (
+        <section className="mt-8">
+          <h2 className="label">Browse by city</h2>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {cities.map((city) => (
+              <Link
+                key={city.slug}
+                href={cityUrl(city.name)}
+                className="border border-rule px-3 py-1.5 text-[12px] text-muted transition-colors hover:border-rule-strong hover:text-ink"
+              >
+                {city.name}
+                <span className="ml-1.5 text-faint">{city.upcoming}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {months.length === 0 ? (
+        <p className="mt-12 border-t border-rule py-16 text-center text-[14px] text-faint">
+          Nothing listed yet. Check back soon.
+        </p>
+      ) : (
+        months.map(([month, monthEvents]) => (
+          <section key={month} className="mt-12">
+            <h2 className="font-display text-[21px] font-medium tracking-[-0.3px]">
+              {month}
+            </h2>
+            <ul className="mt-3">
+              {monthEvents.map((ev) => (
+                <EventCard key={ev.id} event={ev} />
               ))}
-            </div>
+            </ul>
           </section>
-        ) : null}
-
-        {months.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            Nothing listed yet. Check back soon.
-          </p>
-        ) : (
-          months.map(([month, monthEvents]) => (
-            <section key={month} className="mb-8">
-              <h2 className="mb-3 border-b border-slate-200 pb-1 text-sm font-semibold text-slate-900 dark:border-slate-800 dark:text-slate-50">
-                {month}
-              </h2>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {monthEvents.map((ev) => (
-                  <EventCard key={ev.id} event={ev} />
-                ))}
-              </ul>
-            </section>
-          ))
-        )}
-      </div>
+        ))
+      )}
     </main>
   );
 }

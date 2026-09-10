@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "../styles/fullcalendar.css";
-import { Inter } from "next/font/google";
+import { Archivo, Newsreader } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 import Script from "next/script";
 import { GA4PageView } from "./ga4-pageview";
+import SiteHeader from "@/components/SiteHeader";
 import { SITE_URL } from "@/lib/events";
 
-const inter = Inter({
+const newsreader = Newsreader({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-newsreader",
+  display: "swap",
+});
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-archivo",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -65,15 +75,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-GB">
-      <body className={inter.className}>
-
-        {/* Google tag scripts */}
+    <html
+      lang="en-GB"
+      className={`${newsreader.variable} ${archivo.variable}`}
+    >
+      <body className="flex min-h-full flex-col">
         <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-B1ZKLRVV29"
         />
-
         <Script
           id="ga4-init"
           strategy="afterInteractive"
@@ -86,32 +96,32 @@ export default function RootLayout({
             `,
           }}
         />
-
-
-        {/* Track route changes */}
         <GA4PageView />
 
-        {children}
+        <SiteHeader />
 
-        <footer className="mt-10 border-t border-slate-200 py-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          <nav className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link href="/" className="hover:text-indigo-600 hover:underline">
-              Calendar
-            </Link>
-            <Link href="/events" className="hover:text-indigo-600 hover:underline">
-              Upcoming events
-            </Link>
-            <Link href="/cities" className="hover:text-indigo-600 hover:underline">
-              Browse by city
-            </Link>
-            <Link href="/support" className="hover:text-indigo-600 hover:underline">
-              Support this project
-            </Link>
-          </nav>
-          © {new Date().getFullYear()} Islamic Events Calendar UK
+        <div className="flex-1">{children}</div>
+
+        <footer className="mt-16 border-t border-rule">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-5 py-8 text-[12px] text-faint md:flex-row md:items-center md:justify-between md:px-10">
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link href="/events" className="hover:text-ink">
+                Upcoming events
+              </Link>
+              <Link href="/cities" className="hover:text-ink">
+                Browse by city
+              </Link>
+              <Link href="/submit" className="hover:text-ink">
+                Add your event
+              </Link>
+              <Link href="/support" className="hover:text-ink">
+                Support this project
+              </Link>
+            </nav>
+            <p>© {new Date().getFullYear()} Islamic Events Calendar UK</p>
+          </div>
         </footer>
 
-        {/* Vercel Analytics */}
         <Analytics />
       </body>
     </html>
