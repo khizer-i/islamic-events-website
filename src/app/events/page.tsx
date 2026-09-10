@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import EventCard from "@/components/EventCard";
+import SubscribeForm from "@/components/SubscribeForm";
 import { JsonLd, breadcrumbJsonLd, eventListJsonLd } from "@/lib/structured-data";
 import {
   SITE_URL,
@@ -100,6 +101,13 @@ export default async function EventsIndexPage() {
           </section>
         ))
       )}
+
+      <div className="mt-14">
+        <SubscribeForm
+          cities={cities.map((c) => c.name)}
+          source="events-index"
+        />
+      </div>
     </main>
   );
 }

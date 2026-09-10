@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import EventCard from "@/components/EventCard";
+import SubscribeForm from "@/components/SubscribeForm";
 import { JsonLd, breadcrumbJsonLd, eventListJsonLd } from "@/lib/structured-data";
 import {
   SITE_URL,
@@ -119,6 +120,15 @@ export default async function CityPage({ params }: Props) {
           </ul>
         </section>
       ) : null}
+
+      <div className="mt-14">
+        <SubscribeForm
+          city={city.name}
+          source={`city:${city.slug}`}
+          heading={`Islamic events in ${city.name}, by email`}
+          blurb={`One message a week with what has been added in ${city.name}. No adverts, and you can leave any time.`}
+        />
+      </div>
 
       {otherCities.length > 0 ? (
         <section className="mt-14 border-t border-rule pt-8">

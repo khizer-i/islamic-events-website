@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import EventCalendar from "@/components/EventCalendar";
+import SubscribeForm from "@/components/SubscribeForm";
 import { JsonLd, eventListJsonLd, websiteJsonLd } from "@/lib/structured-data";
 import { toCalendarEvent } from "@/lib/calendar";
 import {
@@ -67,6 +68,10 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
+
+      <div className="mt-14">
+        <SubscribeForm cities={cities} source="home" />
+      </div>
     </main>
   );
 }
