@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import EventCard from "@/components/EventCard";
+import RichText from "@/components/RichText";
 import ShareButtons from "@/components/ShareButtons";
 import { JsonLd, breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
 import { CATEGORIES, categoriesForEvent } from "@/lib/calendar";
@@ -231,9 +232,10 @@ export default async function EventPage({ params }: Props) {
           {event.source_caption ? (
             <div className="mt-8 flex flex-col gap-2">
               <h2 className="label">From the organiser</h2>
-              <p className="whitespace-pre-line text-[14px] leading-[1.6] text-ink-soft">
-                {event.source_caption}
-              </p>
+              <RichText
+                text={event.source_caption}
+                className="text-[14px] leading-[1.6] text-ink-soft"
+              />
             </div>
           ) : null}
 

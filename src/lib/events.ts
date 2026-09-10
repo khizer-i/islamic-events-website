@@ -165,6 +165,52 @@ export function monthKey(iso: string | null | undefined): string {
 /* ------------------------------------------------------------------ */
 
 /**
+ * The extraction model sometimes emits the STRING "null" (or "N/A", "unknown")
+ * rather than a JSON null, and those land in the database as real text — which
+ * is why an unknown organiser rendered as the word "null" on the page. Cleaned
+ * here at the single point every route reads through, so no template has to
+ * defend against it individually.
+ */
+const NOT_A_VALUE = new Set([
+  "null",
+  "none",
+  "nil",
+  "n/a",
+  "na",
+  "unknown",
+  "not specified",
+  "not stated",
+  "tbc",
+  "tbd",
+  "-",
+  "--",
+  "undefined",
+]);
+
+function cleanText(value: string | null): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  return NOT_A_VALUE.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
+function cleanRow(ev: EventRow): EventRow {
+  return {
+    ...ev,
+    title: cleanText(ev.title),
+    organiser: cleanText(ev.organiser),
+    venue_name: cleanText(ev.venue_name),
+    city: cleanText(ev.city),
+    notes: cleanText(ev.notes),
+    source_caption: cleanText(ev.source_caption),
+    tags:
+      ev.tags
+        ?.map((t) => cleanText(t))
+        .filter((t): t is string => Boolean(t)) ?? null,
+  };
+}
+
+/**
  * All published events. Cached per-request by React, and the routes that use
  * it set their own `revalidate`, so this hits Supabase rarely.
  * Never throws: a Supabase outage must not break the build or the site.
@@ -181,7 +227,7 @@ export const getAllEvents = cache(async (): Promise<EventRow[]> => {
       console.error("Supabase error loading events:", error.message);
       return [];
     }
-    return (data ?? []) as EventRow[];
+    return ((data ?? []) as EventRow[]).map(cleanRow);
   } catch (err) {
     console.error("Supabase request failed:", err);
     return [];
