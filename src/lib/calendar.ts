@@ -1,5 +1,5 @@
+import { hijriShort } from "./hijri";
 import {
-  HIJRI_MONTHS,
   UK_TZ,
   type EventRow,
   eventLocationLine,
@@ -81,31 +81,6 @@ const MONTH_SHORT = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
   month: "short",
 });
-
-function hijriShort(date: Date): string {
-  try {
-    const parts = new Intl.DateTimeFormat("en-GB-u-ca-islamic-umalqura", {
-      timeZone: "UTC",
-      day: "numeric",
-      month: "numeric",
-    }).formatToParts(date);
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    const day = get("day").replace(/^0+/, "");
-    const month = HIJRI_MONTHS[Number(get("month")) - 1];
-    if (!day || !month) return "";
-    // "Rabi al-Awwal" is too long for a day cell; take the distinguishing part.
-    const short = month
-      .replace("Rabi al-Awwal", "Rabi I")
-      .replace("Rabi al-Thani", "Rabi II")
-      .replace("Jumada al-Awwal", "Jumada I")
-      .replace("Jumada al-Thani", "Jumada II")
-      .replace("Dhu al-Qa'dah", "Dhu Qa'dah")
-      .replace("Dhu al-Hijjah", "Dhu Hijjah");
-    return `${day} ${short}`;
-  } catch {
-    return "";
-  }
-}
 
 /** Events bucketed by the UK day they start on. */
 export function bucketEventsByDay(

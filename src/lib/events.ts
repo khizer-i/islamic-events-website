@@ -1,26 +1,13 @@
 import { cache } from "react";
 import { supabase } from "./supabaseClient";
+import { hijriLong, UK_TZ } from "./hijri";
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
 ).replace(/\/+$/, "");
 
-export const UK_TZ = "Europe/London";
-
-export const HIJRI_MONTHS = [
-  "Muharram",
-  "Safar",
-  "Rabi al-Awwal",
-  "Rabi al-Thani",
-  "Jumada al-Awwal",
-  "Jumada al-Thani",
-  "Rajab",
-  "Sha'ban",
-  "Ramadan",
-  "Shawwal",
-  "Dhu al-Qa'dah",
-  "Dhu al-Hijjah",
-];
+// Both now live in ./hijri, re-exported here so existing imports keep working.
+export { UK_TZ, HIJRI_MONTHS } from "./hijri";
 
 export type EventRow = {
   id: string;
@@ -128,26 +115,7 @@ export function formatTime(iso: string | null | undefined): string | null {
 export function formatHijri(iso: string | null | undefined): string | null {
   const d = toDate(iso);
   if (!d) return null;
-  try {
-    const parts = new Intl.DateTimeFormat("en-GB-u-ca-islamic-umalqura", {
-      timeZone: UK_TZ,
-      day: "numeric",
-      month: "numeric",
-      year: "numeric",
-    }).formatToParts(d);
-
-    const get = (type: string) =>
-      parts.find((p) => p.type === type)?.value ?? "";
-
-    const day = get("day").replace(/^0+/, "");
-    const monthIndex = Number(get("month")) - 1;
-    const year = get("year").replace(/[^0-9]/g, "");
-    const month = HIJRI_MONTHS[monthIndex];
-    if (!day || !month || !year) return null;
-    return `${day} ${month} ${year} AH`;
-  } catch {
-    return null;
-  }
+  return hijriLong(d);
 }
 
 export function monthKey(iso: string | null | undefined): string {
@@ -311,16 +279,36 @@ export const getEventsInCity = cache(
   }
 );
 
-/** Other upcoming events to cross-link from an event page. */
+export type RelatedEvents = {
+  /** Upcoming events in the same city, which the city heading can claim. */
+  sameCity: EventRow[];
+  /** Upcoming events anywhere else, headed separately so the page stays honest. */
+  elsewhere: EventRow[];
+};
+
+/**
+ * Other upcoming events to cross-link from an event page, kept in two buckets.
+ *
+ * These used to be concatenated and sliced, which meant a city with only two
+ * upcoming events had its list padded out to six from other cities under a
+ * heading reading "More upcoming events in <city>". The buckets are returned
+ * separately so the page can head each one for what it actually is.
+ */
 export async function getRelatedEvents(
   ev: EventRow,
   limit = 6
-): Promise<EventRow[]> {
+): Promise<RelatedEvents> {
   const upcoming = await getUpcomingEvents();
   const others = upcoming.filter((e) => e.id !== ev.id);
-  const sameCity = others.filter((e) => e.city && e.city === ev.city);
-  const rest = others.filter((e) => !e.city || e.city !== ev.city);
-  return [...sameCity, ...rest].slice(0, limit);
+
+  const sameCity = ev.city
+    ? others.filter((e) => e.city === ev.city).slice(0, limit)
+    : [];
+  const elsewhere = others
+    .filter((e) => !ev.city || e.city !== ev.city)
+    .slice(0, Math.max(0, limit - sameCity.length));
+
+  return { sameCity, elsewhere };
 }
 
 /* ------------------------------------------------------------------ */

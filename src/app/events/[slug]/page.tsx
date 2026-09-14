@@ -266,18 +266,34 @@ export default async function EventPage({ params }: Props) {
         </div>
       </div>
 
-      {related.length > 0 ? (
+      {related.sameCity.length > 0 || related.elsewhere.length > 0 ? (
         <section className="mt-16 border-t border-rule-strong pt-8">
-          <h2 className="font-display text-[21px] font-medium tracking-[-0.3px]">
-            {event.city
-              ? `More upcoming events in ${event.city}`
-              : "More upcoming events"}
-          </h2>
-          <ul className="mt-3">
-            {related.map((ev) => (
-              <EventCard key={ev.id} event={ev} />
-            ))}
-          </ul>
+          {related.sameCity.length > 0 ? (
+            <>
+              <h2 className="font-display text-[21px] font-medium tracking-[-0.3px]">
+                More upcoming events in {event.city}
+              </h2>
+              <ul className="mt-3">
+                {related.sameCity.map((ev) => (
+                  <EventCard key={ev.id} event={ev} />
+                ))}
+              </ul>
+            </>
+          ) : null}
+
+          {related.elsewhere.length > 0 ? (
+            <div className={related.sameCity.length > 0 ? "mt-10" : undefined}>
+              <h2 className="font-display text-[21px] font-medium tracking-[-0.3px]">
+                {event.city ? "Elsewhere in the UK" : "More upcoming events"}
+              </h2>
+              <ul className="mt-3">
+                {related.elsewhere.map((ev) => (
+                  <EventCard key={ev.id} event={ev} />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <Link
             href="/events"
             className="mt-5 inline-block text-[13px] font-medium text-accent hover:underline"
