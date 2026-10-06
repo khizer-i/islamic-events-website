@@ -12,6 +12,7 @@ import {
   SITE_URL,
   cityUrl,
   eventDescription,
+  eventEnd,
   eventSlug,
   eventTitle,
   eventUrl,
@@ -84,7 +85,8 @@ export default async function EventPage({ params }: Props) {
   const title = eventTitle(event);
   const canonical = `${SITE_URL}${eventUrl(event)}`;
   const startTime = formatTime(event.start_datetime_utc);
-  const endTime = formatTime(event.end_datetime_utc);
+  const end = eventEnd(event);
+  const endTime = end ? formatTime(end.iso) : null;
   const hijri = formatHijri(event.start_datetime_utc);
   const gcal = googleCalendarUrl(event);
   const related = await getRelatedEvents(event);
@@ -161,8 +163,11 @@ export default async function EventPage({ params }: Props) {
         <p className="font-display text-[17px] text-accent md:text-[19px]">
           {formatDateLong(event.start_datetime_utc)}
           {startTime ? <span className="tnum"> · {startTime}</span> : null}
-          {endTime && endTime !== startTime ? (
+          {startTime && endTime && endTime !== startTime ? (
             <span className="tnum">–{endTime}</span>
+          ) : null}
+          {startTime && end?.estimated ? (
+            <span className="text-[13px] text-faint"> (end time estimated)</span>
           ) : null}
         </p>
         {hijri ? <p className="text-[13px] text-faint">{hijri}</p> : null}

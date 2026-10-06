@@ -349,6 +349,33 @@ export function eventDescription(ev: EventRow): string {
   return full.length > 300 ? `${full.slice(0, 297).trimEnd()}...` : full;
 }
 
+/**
+ * Most posters give a start time but no finish, so a timed event with no
+ * recorded end is assumed to run for two hours. The assumption lives here
+ * so the event page, the JSON-LD and the Google Calendar link all agree,
+ * and the page labels it as an estimate. Events with no start time (the
+ * midnight convention) get no estimate: they are treated as all-day.
+ */
+export const ESTIMATED_DURATION_MS = 2 * 60 * 60 * 1000;
+
+export type EventEnd = { iso: string; estimated: boolean };
+
+export function eventEnd(ev: EventRow): EventEnd | null {
+  const start = toDate(ev.start_datetime_utc);
+  if (!start) return null;
+
+  const end = toDate(ev.end_datetime_utc);
+  if (end && end.getTime() > start.getTime()) {
+    return { iso: end.toISOString(), estimated: false };
+  }
+  if (!formatTime(ev.start_datetime_utc)) return null;
+
+  return {
+    iso: new Date(start.getTime() + ESTIMATED_DURATION_MS).toISOString(),
+    estimated: true,
+  };
+}
+
 function gcalStamp(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
@@ -361,8 +388,7 @@ export function googleCalendarUrl(ev: EventRow): string | null {
   const start = toDate(ev.start_datetime_utc);
   if (!start) return null;
   const end =
-    toDate(ev.end_datetime_utc) ??
-    new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    toDate(eventEnd(ev)?.iso) ?? new Date(start.getTime() + ESTIMATED_DURATION_MS);
 
   const params = new URLSearchParams({
     action: "TEMPLATE",

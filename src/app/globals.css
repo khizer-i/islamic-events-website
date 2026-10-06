@@ -9,6 +9,10 @@
 /* ------------------------------------------------------------------ */
 
 :root {
+  /* Lets native controls (date and time pickers, scrollbars) follow the
+     palette swap below instead of always drawing for a light page. */
+  color-scheme: light dark;
+
   --paper: #faf8f3;
   --paper-sunk: #f1ede1;
   --paper-raised: #ffffff;

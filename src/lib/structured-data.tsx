@@ -2,6 +2,7 @@ import {
   SITE_URL,
   UK_TZ,
   eventDescription,
+  eventEnd,
   eventTitle,
   eventUrl,
   toDate,
@@ -86,33 +87,22 @@ function schemaDate(
 
 /**
  * endDate rules:
- * - no end recorded, start has no time: the event is assumed to be on the
- *   start day, so endDate is that same date.
- * - no end recorded, start has a time: left out. Matching startDate's
- *   format would mean inventing an end time, which is the guess the bot
- *   deliberately stopped making.
- * - end recorded: kept, at the same precision as startDate, and dropped if
- *   bad data puts it before the start.
+ * - start has no time: all-day, so endDate is a date. The start day unless
+ *   a later end date is recorded.
+ * - start has a time: the recorded end, or the two-hour estimate from
+ *   eventEnd(). schema.org has no way to mark a value as estimated, so the
+ *   label lives on the event page instead.
  */
-function schemaEndDate(
-  start: SchemaDate,
-  endIso: string | null | undefined
-): string | undefined {
-  const end = schemaDate(endIso);
-
-  if (!end) return start.hasTime ? undefined : start.date;
-
+function schemaEndDate(start: SchemaDate, ev: EventRow): string | undefined {
   if (!start.hasTime) {
-    return end.date >= start.date ? end.date : start.date;
+    const end = schemaDate(ev.end_datetime_utc);
+    return end && end.date > start.date ? end.date : start.date;
   }
 
+  const end = eventEnd(ev);
   // A timed start needs a timed end, so a real midnight finish (an event
   // running 19:00 to 00:00) is kept as a time here, not collapsed to a date.
-  const timedEnd = schemaDate(endIso, true);
-  const startMs = toDate(start.value)?.getTime() ?? 0;
-  const endMs = toDate(endIso)?.getTime() ?? 0;
-  if (!timedEnd || endMs <= startMs) return undefined;
-  return timedEnd.value;
+  return end ? schemaDate(end.iso, true)?.value : undefined;
 }
 
 /**
@@ -151,7 +141,7 @@ export function eventJsonLd(ev: EventRow): Json | null {
     "@type": "Event",
     name: eventTitle(ev),
     startDate: start.value,
-    endDate: schemaEndDate(start, ev.end_datetime_utc),
+    endDate: schemaEndDate(start, ev),
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     description: eventDescription(ev),
