@@ -88,6 +88,7 @@ export default async function EventPage({ params }: Props) {
   const hijri = formatHijri(event.start_datetime_utc);
   const gcal = googleCalendarUrl(event);
   const related = await getRelatedEvents(event);
+  const eventLd = eventJsonLd(event);
 
   const upcomingIds = new Set((await getUpcomingEvents()).map((e) => e.id));
   const isPast = !upcomingIds.has(event.id);
@@ -100,7 +101,7 @@ export default async function EventPage({ params }: Props) {
     <main className="mx-auto max-w-[900px] px-5 py-8 md:px-10 md:py-12">
       <JsonLd
         data={[
-          eventJsonLd(event),
+          ...(eventLd ? [eventLd] : []),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Events", path: "/events" },
