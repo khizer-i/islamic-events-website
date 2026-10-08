@@ -1,4 +1,5 @@
 import { hijriShort } from "./hijri";
+import { repeatLabel } from "./recurrence";
 import {
   UK_TZ,
   type EventRow,
@@ -27,6 +28,8 @@ export type CalendarEvent = {
   posterUrl: string | null;
   categories: string[];
   isCourse: boolean;
+  /** "Weekly", "Fortnightly", "Monthly", "Daily", or null for a one-off. */
+  repeats: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -290,5 +293,6 @@ export function toCalendarEvent(ev: EventRow): CalendarEvent {
     posterUrl: ev.poster_url,
     categories,
     isCourse: categories.includes("courses"),
+    repeats: repeatLabel(ev.recurrence_rule),
   };
 }

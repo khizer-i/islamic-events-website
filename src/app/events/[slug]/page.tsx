@@ -14,10 +14,12 @@ import {
   cityUrl,
   eventDescription,
   eventEnd,
+  eventSessions,
   eventSlug,
   eventTitle,
   eventUrl,
   formatDateLong,
+  formatDateShort,
   formatHijri,
   formatTagLabel,
   formatTime,
@@ -26,7 +28,9 @@ import {
   getRelatedEvents,
   getUpcomingEvents,
   googleCalendarUrl,
+  nextSession,
 } from "@/lib/events";
+import { describeRule } from "@/lib/recurrence";
 
 export const revalidate = 900;
 export const dynamicParams = true;
@@ -85,13 +89,29 @@ export default async function EventPage({ params }: Props) {
 
   const title = eventTitle(event);
   const canonical = `${SITE_URL}${eventUrl(event)}`;
-  const startTime = formatTime(event.start_datetime_utc);
-  const end = eventEnd(event);
+  // A series is shown at its next session (or its last, once it is over).
+  // Everything below that reads a date reads `shown`.
+  const sessions = eventSessions(event);
+  const series = sessions.length > 1;
+  const next = nextSession(event);
+  const shown = next ?? sessions[sessions.length - 1];
+  const upcomingSessions = next
+    ? sessions.filter((s) => (s.start_datetime_utc ?? "") >= (next.start_datetime_utc ?? ""))
+    : [];
+  const lastSession = sessions[sessions.length - 1];
+  const pattern = series ? describeRule(event.recurrence_rule, event.start_datetime_utc) : null;
+
+  const startTime = formatTime(shown.start_datetime_utc);
+  const end = eventEnd(shown);
   const endTime = end ? formatTime(end.iso) : null;
-  const hijri = formatHijri(event.start_datetime_utc);
-  const gcal = googleCalendarUrl(event);
+  const hijri = formatHijri(shown.start_datetime_utc);
+  const gcal = googleCalendarUrl(shown);
   const related = await getRelatedEvents(event);
-  const eventLd = eventJsonLd(event);
+  // Google wants each date of a repeating event as its own Event, so a
+  // series lists its next few sessions (all at this one page).
+  const eventLd = (series && next ? upcomingSessions.slice(0, 6) : [event])
+    .map((s) => eventJsonLd(s))
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 
   const upcomingIds = new Set((await getUpcomingEvents()).map((e) => e.id));
   const isPast = !upcomingIds.has(event.id);
@@ -104,7 +124,7 @@ export default async function EventPage({ params }: Props) {
     <main className="mx-auto max-w-[900px] px-5 py-8 md:px-10 md:py-12">
       <JsonLd
         data={[
-          ...(eventLd ? [eventLd] : []),
+          ...eventLd,
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Events", path: "/events" },
@@ -162,7 +182,8 @@ export default async function EventPage({ params }: Props) {
         </h1>
 
         <p className="font-display text-[17px] text-accent md:text-[19px]">
-          {formatDateLong(event.start_datetime_utc)}
+          {series && next ? <span className="text-[13px] font-sans uppercase tracking-[0.08em]">Next: </span> : null}
+          {formatDateLong(shown.start_datetime_utc)}
           {startTime ? <span className="tnum"> · {startTime}</span> : null}
           {startTime && endTime && endTime !== startTime ? (
             <span className="tnum">–{endTime}</span>
@@ -172,6 +193,15 @@ export default async function EventPage({ params }: Props) {
           ) : null}
         </p>
         {hijri ? <p className="text-[13px] text-faint">{hijri}</p> : null}
+        {pattern ? (
+          <p className="text-[14px] text-ink-soft">
+            {next
+              ? event.recurrence_open
+                ? `${pattern}, ongoing`
+                : `${pattern}, until ${formatDateLong(lastSession.start_datetime_utc)}`
+              : `Ran ${pattern[0].toLowerCase()}${pattern.slice(1)}, until ${formatDateLong(lastSession.start_datetime_utc)}`}
+          </p>
+        ) : null}
       </div>
 
       {/* Poster + details */}
@@ -208,6 +238,24 @@ export default async function EventPage({ params }: Props) {
                 >
                   {event.city}
                 </Link>
+              </Row>
+            ) : null}
+
+            {series && next ? (
+              <Row label="Dates">
+                <span className="flex flex-wrap gap-x-3 gap-y-1 text-[14px] tnum">
+                  {upcomingSessions.slice(0, 8).map((s) => (
+                    <span key={s.start_datetime_utc}>{formatDateShort(s.start_datetime_utc)}</span>
+                  ))}
+                  {upcomingSessions.length > 8 ? (
+                    <span className="text-faint">and {upcomingSessions.length - 8} more</span>
+                  ) : null}
+                </span>
+                {event.recurrence_open ? (
+                  <span className="text-[12px] text-faint">
+                    {`Listed to ${formatDateShort(lastSession.start_datetime_utc)}. Please check with the organiser for later weeks.`}
+                  </span>
+                ) : null}
               </Row>
             ) : null}
 

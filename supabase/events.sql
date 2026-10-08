@@ -1,4 +1,5 @@
--- The `events` table as it actually exists, introspected 2026-09-10.
+-- The `events` table as it actually exists, introspected 2026-09-10,
+-- plus the recurrence columns from recurrence.sql (Oct 2026).
 --
 -- This is the reproducible definition: running it against an empty project
 -- gives you the table the bot writes to and the site reads from. Keep it in
@@ -28,6 +29,12 @@ create table if not exists public.events (
   source_caption     text,
   source_ocr         text,
   poster_url         text,
+
+  -- Repeating events, added Oct 2026 (see recurrence.sql for what each means).
+  recurrence_rule          text,
+  recurrence_text          text,
+  recurrence_open          boolean     not null default false,
+  recurrence_checked_until date,
 
   status             text        not null default 'published'
 );

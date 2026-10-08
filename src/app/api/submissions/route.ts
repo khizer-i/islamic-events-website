@@ -7,6 +7,7 @@ import {
   forwardToBot,
   jsonError,
 } from "@/lib/submissions";
+import { cleanRepeat } from "@/lib/repeat-form";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,10 +41,11 @@ export async function POST(request: Request) {
     return jsonError(400, "Invalid request.");
   }
 
-  const { token, image, fields, description, company } = (body ?? {}) as {
+  const { token, image, fields, repeat, description, company } = (body ?? {}) as {
     token?: unknown;
     image?: unknown;
     fields?: unknown;
+    repeat?: unknown;
     description?: unknown;
     company?: unknown;
   };
@@ -79,6 +81,9 @@ export async function POST(request: Request) {
       token,
       image_base64: image,
       fields: clean,
+      // What the submitter chose under "Repeats". Left out entirely when the
+      // form did not send one, so the bot falls back to what it read.
+      ...(repeat && typeof repeat === "object" ? { repeat: cleanRepeat(repeat) } : {}),
       description:
         typeof description === "string" ? description.slice(0, 3000) : "",
     },

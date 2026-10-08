@@ -6,6 +6,7 @@ import { JsonLd, eventListJsonLd, websiteJsonLd } from "@/lib/structured-data";
 import { toCalendarEvent } from "@/lib/calendar";
 import {
   cityUrl,
+  getCalendarSessions,
   getCitySummaries,
   getUpcomingEvents,
 } from "@/lib/events";
@@ -16,7 +17,8 @@ export default async function HomePage() {
   const upcoming = await getUpcomingEvents();
   const citySummaries = await getCitySummaries();
 
-  const calendarEvents = upcoming.map(toCalendarEvent);
+  // Every session of a series, so a weekly class shows on each date it runs.
+  const calendarEvents = (await getCalendarSessions()).map(toCalendarEvent);
   const cities = citySummaries
     .filter((c) => c.upcoming > 0)
     .map((c) => c.name)

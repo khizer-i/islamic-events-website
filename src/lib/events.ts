@@ -1,6 +1,12 @@
 import { cache } from "react";
 import { supabase } from "./supabaseClient";
 import { hijriLong, UK_TZ } from "./hijri";
+import {
+  calendarRrule,
+  describeRule,
+  occurrenceInstants,
+  parseRule,
+} from "./recurrence";
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
@@ -22,6 +28,14 @@ export type EventRow = {
   poster_url: string | null;
   source_caption: string | null;
   status: string | null;
+  /** Repeating events (Oct 2026). Optional so rows from before the
+   *  recurrence columns existed still type-check. See lib/recurrence.ts. */
+  recurrence_rule?: string | null;
+  recurrence_text?: string | null;
+  recurrence_open?: boolean | null;
+  /** Not a column: set on a copy moved to one session of a series (see
+   *  atSession), holding the series' first start. */
+  series_start_utc?: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -202,21 +216,103 @@ export const getAllEvents = cache(async (): Promise<EventRow[]> => {
   }
 });
 
+/* ------------------------------------------------------------------ */
+/* Repeating events                                                    */
+/* ------------------------------------------------------------------ */
+
+/** True when the row repeats (has a rule the site understands). */
+export function isSeries(ev: EventRow): boolean {
+  return parseRule(ev.recurrence_rule) !== null;
+}
+
 /**
- * Events that have not finished yet (today's events stay visible all day).
- *
- * Reads the end through eventEnd(), never end_datetime_utc directly: for a
- * recurring class the stored end is the LAST DATE OF THE SERIES, which kept a
- * talk from 21 September listed as "upcoming" until 21 November.
+ * A copy of the row moved to one session of its series, keeping the
+ * session's length. Every helper that reads start/end (times, the 2-hour
+ * estimate, markup, cards) then works on a session unchanged.
+ */
+export function atSession(ev: EventRow, startMs: number): EventRow {
+  const start = toDate(ev.start_datetime_utc);
+  // occurrenceEnd, not the raw column: older rows stored the SERIES end there.
+  const end = occurrenceEnd(ev);
+  const length = start && end ? end.getTime() - start.getTime() : null;
+  return {
+    ...ev,
+    start_datetime_utc: new Date(startMs).toISOString(),
+    end_datetime_utc: length !== null ? new Date(startMs + length).toISOString() : null,
+    series_start_utc: ev.series_start_utc ?? ev.start_datetime_utc,
+  };
+}
+
+/** Every session of a series, first to last (a one-off gives itself). */
+export function eventSessions(ev: EventRow): EventRow[] {
+  if (!isSeries(ev)) return [ev];
+  return occurrenceInstants(ev.start_datetime_utc, ev.recurrence_rule).map((t) =>
+    atSession(ev, t)
+  );
+}
+
+/** Today's events stay visible all day: anything ending in the last 12 hours counts. */
+function upcomingCutoff(): number {
+  return Date.now() - 12 * 60 * 60 * 1000;
+}
+
+/**
+ * Reads the end through eventEnd(), never end_datetime_utc directly: older
+ * rows for a recurring class stored the LAST DATE OF THE SERIES there, which
+ * kept a talk from 21 September listed as "upcoming" until 21 November.
+ */
+function stillOn(ev: EventRow, cutoff: number): boolean {
+  const end = toDate(eventEnd(ev)?.iso) ?? toDate(ev.start_datetime_utc);
+  return end ? end.getTime() >= cutoff : false;
+}
+
+/** The next session that has not finished, or null once the series is over. */
+export function nextSession(ev: EventRow, cutoff = upcomingCutoff()): EventRow | null {
+  return eventSessions(ev).find((s) => stillOn(s, cutoff)) ?? null;
+}
+
+const byStart = (a: EventRow, b: EventRow) =>
+  (a.start_datetime_utc ?? "").localeCompare(b.start_datetime_utc ?? "");
+
+/**
+ * Events that have not finished yet. A series appears ONCE, moved to its
+ * next session, so a weekly class does not fill a list with copies of
+ * itself; it stays upcoming until its last session has passed.
  */
 export const getUpcomingEvents = cache(async (): Promise<EventRow[]> => {
   const all = await getAllEvents();
-  const cutoff = Date.now() - 12 * 60 * 60 * 1000;
-  return all.filter((ev) => {
-    const end = toDate(eventEnd(ev)?.iso) ?? toDate(ev.start_datetime_utc);
-    return end ? end.getTime() >= cutoff : false;
-  });
+  const cutoff = upcomingCutoff();
+  const out: EventRow[] = [];
+  for (const ev of all) {
+    if (isSeries(ev)) {
+      const next = nextSession(ev, cutoff);
+      if (next) out.push(next);
+    } else if (stillOn(ev, cutoff)) {
+      out.push(ev);
+    }
+  }
+  return out.sort(byStart);
 });
+
+/**
+ * For the calendar grid: every session in the next `days` days, so a weekly
+ * class shows on each date it runs. Lists use getUpcomingEvents instead.
+ */
+export const getCalendarSessions = cache(
+  async (days = 49): Promise<EventRow[]> => {
+    const all = await getAllEvents();
+    const cutoff = upcomingCutoff();
+    const horizon = Date.now() + days * 86_400_000;
+    const out: EventRow[] = [];
+    for (const ev of all) {
+      for (const s of eventSessions(ev)) {
+        const start = toDate(s.start_datetime_utc)?.getTime();
+        if (start !== undefined && start <= horizon && stillOn(s, cutoff)) out.push(s);
+      }
+    }
+    return out.sort(byStart);
+  }
+);
 
 export const getEventBySlug = cache(
   async (slug: string): Promise<EventRow | null> => {
@@ -272,10 +368,13 @@ export const getCityBySlug = cache(
 export const getEventsInCity = cache(
   async (cityName: string): Promise<{ upcoming: EventRow[]; past: EventRow[] }> => {
     const all = await getAllEvents();
-    const upcomingIds = new Set((await getUpcomingEvents()).map((e) => e.id));
+    const upcomingAll = await getUpcomingEvents();
+    const upcomingIds = new Set(upcomingAll.map((e) => e.id));
     const inCity = all.filter((ev) => ev.city === cityName);
     return {
-      upcoming: inCity.filter((ev) => upcomingIds.has(ev.id)),
+      // From the upcoming list, not the raw rows, so a series shows at its
+      // next session rather than its first.
+      upcoming: upcomingAll.filter((ev) => ev.city === cityName),
       past: inCity
         .filter((ev) => !upcomingIds.has(ev.id))
         .sort((a, b) =>
@@ -338,12 +437,16 @@ export function eventLocationLine(ev: EventRow): string {
 
 /** Short human description used for meta descriptions and cards. */
 export function eventDescription(ev: EventRow): string {
-  const when = formatDateLong(ev.start_datetime_utc);
+  const pattern = describeRule(ev.recurrence_rule, ev.start_datetime_utc);
+  const firstStart = ev.series_start_utc ?? ev.start_datetime_utc;
+  const when = pattern
+    ? `${pattern[0].toLowerCase()}${pattern.slice(1)}, from ${formatDateLong(firstStart)}`
+    : formatDateLong(ev.start_datetime_utc);
   const time = formatTime(ev.start_datetime_utc);
   const where = eventLocationLine(ev);
 
   const bits = [
-    `${eventTitle(ev)} on ${when}${time ? ` at ${time}` : ""}${
+    `${eventTitle(ev)}${pattern ? ", " : " on "}${when}${time ? ` at ${time}` : ""}${
       where ? `, ${where}` : ""
     }.`,
     ev.organiser ? `Organised by ${ev.organiser}.` : "",
@@ -432,6 +535,23 @@ export function eventEnd(ev: EventRow): EventEnd | null {
   };
 }
 
+const UK_STAMP = new Intl.DateTimeFormat("en-GB", {
+  timeZone: UK_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+/** UK wall-clock as YYYYMMDDTHHMMSS, no zone (paired with ctz). */
+function ukStamp(d: Date): string {
+  const p = Object.fromEntries(UK_STAMP.formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p.year}${p.month}${p.day}T${p.hour}${p.minute}${p.second}`;
+}
+
 function gcalStamp(d: Date): string {
   return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 }
@@ -453,6 +573,19 @@ export function googleCalendarUrl(ev: EventRow): string | null {
     details: `${ev.source_caption?.trim() || ""}\n\n${SITE_URL}${eventUrl(ev)}`.trim(),
     location: eventLocationLine(ev) || "United Kingdom",
   });
+
+  // A series goes in as a repeating calendar entry from this session to the
+  // last. Times are then given as UK wall-clock with ctz, so the calendar
+  // repeats it at 19:00 UK rather than at a fixed UTC time that would slip
+  // an hour at the clock change.
+  const rrule = isSeries(ev)
+    ? calendarRrule(ev.series_start_utc ?? ev.start_datetime_utc, ev.recurrence_rule)
+    : null;
+  if (rrule) {
+    params.set("dates", `${ukStamp(start)}/${ukStamp(end)}`);
+    params.set("ctz", UK_TZ);
+    params.set("recur", rrule);
+  }
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

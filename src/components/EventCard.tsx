@@ -9,6 +9,7 @@ import {
   formatTime,
   type EventRow,
 } from "@/lib/events";
+import { repeatLabel } from "@/lib/recurrence";
 
 /**
  * A server-rendered event row for the index and city pages. Real HTML in the
@@ -17,6 +18,7 @@ import {
 export default function EventCard({ event }: { event: EventRow }) {
   const time = formatTime(event.start_datetime_utc);
   const where = eventLocationLine(event);
+  const repeats = repeatLabel(event.recurrence_rule);
 
   return (
     <li>
@@ -37,6 +39,7 @@ export default function EventCard({ event }: { event: EventRow }) {
           <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-accent">
             <span className="tnum">{formatDateShort(event.start_datetime_utc)}</span>
             {time ? <span className="tnum"> · {time}</span> : null}
+            {repeats ? <span> · {repeats}</span> : null}
           </p>
 
           <h3 className="font-display text-[19px] font-medium leading-[1.22] tracking-[-0.2px] text-pretty group-hover:text-accent">

@@ -82,6 +82,9 @@ export default function AgendaList({
                       {ev.title}
                     </h3>
                     <p className="text-[13px] leading-[1.45] text-muted">
+                      {ev.repeats ? (
+                        <span className="text-accent">{ev.repeats} · </span>
+                      ) : null}
                       {ev.time ? <span className="tnum">{ev.time}</span> : null}
                       {ev.time && ev.location ? " · " : ""}
                       {ev.location}

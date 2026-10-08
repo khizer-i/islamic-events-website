@@ -4,7 +4,9 @@ import {
   formatDateLong,
   formatTime,
   getEventBySlug,
+  nextSession,
 } from "@/lib/events";
+import { describeRule } from "@/lib/recurrence";
 import { OG_SIZE, renderShareCard } from "@/lib/og-card";
 
 export const size = OG_SIZE;
@@ -28,9 +30,13 @@ export default async function OpengraphImage({
     event = null;
   }
 
+  // A series reads "Every Wednesday" rather than whichever date it started.
+  const pattern = event ? describeRule(event.recurrence_rule, event.start_datetime_utc) : null;
+  const shown = event ? (nextSession(event) ?? event) : null;
+
   const card = {
     title: event ? eventTitle(event) : "UK Islamic Events Calendar",
-    when: event ? formatDateLong(event.start_datetime_utc) : "",
+    when: pattern ?? (shown ? formatDateLong(shown.start_datetime_utc) : ""),
     time: event ? formatTime(event.start_datetime_utc) : null,
     where: event ? eventLocationLine(event) : "",
   };

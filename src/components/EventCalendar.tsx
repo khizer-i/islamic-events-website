@@ -66,7 +66,18 @@ export default function EventCalendar({
   );
 
   const days = useMemo(() => weeks.flatMap((w) => w.days), [weeks]);
-  const categories = useMemo(() => categoryCounts(events), [events]);
+  // Counted over the same six weeks as the total below, so "Sisters 14" can
+  // never sit beside "13 events". (A series contributes one per session.)
+  const windowKeys = useMemo(() => new Set(days.map((d) => d.key)), [days]);
+  const categories = useMemo(
+    () =>
+      categoryCounts(
+        events.filter(
+          (ev) => ev.startUtc && windowKeys.has(ukDayKey(new Date(ev.startUtc)))
+        )
+      ),
+    [events, windowKeys]
+  );
   // Counted from the window, not the filter, so it matches what is on screen.
   const total = useMemo(
     () => days.reduce((n, d) => n + d.events.length, 0),
