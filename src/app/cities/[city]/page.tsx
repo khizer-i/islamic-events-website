@@ -46,6 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
+      // Setting openGraph here replaces the site-wide one, image included,
+      // so the share card from app/opengraph-image.tsx is named explicitly.
+      images: ["/opengraph-image"],
       url: `${SITE_URL}${cityUrl(city.name)}`,
     },
   };

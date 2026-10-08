@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import LogoMark from "@/components/LogoMark";
+
 const NAV = [
   { href: "/", label: "Calendar" },
   { href: "/events", label: "Upcoming" },
@@ -10,15 +12,16 @@ export default function SiteHeader() {
   return (
     <header className="border-b border-rule-strong">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 md:px-10 md:py-5">
-        <div className="flex items-baseline gap-5 md:gap-7">
+        <div className="flex items-center gap-5 md:gap-7">
           <Link
             href="/"
-            className="font-display text-[20px] font-semibold tracking-[-0.3px] md:text-[25px]"
+            className="flex items-center gap-2 font-display text-[20px] font-semibold tracking-[-0.3px] md:gap-2.5 md:text-[25px]"
           >
+            <LogoMark className="h-[30px] w-[30px] shrink-0 text-accent md:h-[38px] md:w-[38px]" />
             Islamic Events
           </Link>
 
-          <nav className="hidden items-baseline gap-5 md:flex">
+          <nav className="hidden items-center gap-5 md:flex">
             {NAV.map((item) => (
               <Link
                 key={item.href}

@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     title: "Upcoming Islamic events in the UK",
     description:
       "Lectures, halaqas, classes, fundraisers and community events across the UK.",
+    // Setting openGraph here replaces the site-wide one, image included,
+    // so the share card from app/opengraph-image.tsx is named explicitly.
+    images: ["/opengraph-image"],
     url: `${SITE_URL}/events`,
   },
 };
