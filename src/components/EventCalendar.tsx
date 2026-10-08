@@ -17,7 +17,7 @@ import {
   weekRangeLabel,
 } from "@/lib/calendar";
 
-type View = "auto" | "list" | "calendar";
+type View = "list" | "calendar";
 
 const SELECTED_DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
@@ -35,7 +35,9 @@ export default function EventCalendar({
   cities: string[];
   weekCount?: number;
 }) {
-  const [view, setView] = useState<View>("auto");
+  // Calendar first on every screen size (Oct 2026). It used to be the list
+  // on phones, with neither toggle button lit until one was tapped.
+  const [view, setView] = useState<View>("calendar");
   const [city, setCity] = useState("ALL");
   const [category, setCategory] = useState<string | null>(null);
   const pendingScroll = useRef<string | null>(null);
@@ -48,7 +50,10 @@ export default function EventCalendar({
     [todayKey]
   );
 
-  const [selectedDay, setSelectedDay] = useState(todayKey);
+  // null until the visitor taps a day. Until then the phone calendar opens
+  // on the first day from today that has something on, so the calendar view
+  // never opens on "Nothing listed on this day" when next week is busy.
+  const [pickedDay, setPickedDay] = useState<string | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -84,6 +89,10 @@ export default function EventCalendar({
     [days]
   );
 
+  const selectedDay =
+    pickedDay ??
+    days.find((d) => d.key >= todayKey && d.events.length > 0)?.key ??
+    todayKey;
   const selected = days.find((d) => d.key === selectedDay);
 
   // Runs after the view switch has rendered the list, so the target exists.
@@ -96,10 +105,8 @@ export default function EventCalendar({
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [view]);
 
-  const listClass =
-    view === "list" ? "block" : view === "calendar" ? "hidden" : "lg:hidden";
-  const calendarClass =
-    view === "calendar" ? "block" : view === "list" ? "hidden" : "hidden lg:block";
+  const listClass = view === "list" ? "block" : "hidden";
+  const calendarClass = view === "calendar" ? "block" : "hidden";
 
   const filtersActive = city !== "ALL" || category !== null;
 
@@ -134,17 +141,6 @@ export default function EventCalendar({
           <div className="flex overflow-hidden border border-rule-strong">
             <button
               type="button"
-              onClick={() => setView("list")}
-              className={`cursor-pointer px-3.5 py-2 text-[12px] font-medium ${
-                view === "list"
-                  ? "bg-fill text-fill-text"
-                  : "text-ink-soft hover:bg-paper-sunk"
-              }`}
-            >
-              List
-            </button>
-            <button
-              type="button"
               onClick={() => setView("calendar")}
               className={`cursor-pointer px-3.5 py-2 text-[12px] font-medium ${
                 view === "calendar"
@@ -153,6 +149,17 @@ export default function EventCalendar({
               }`}
             >
               Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={`cursor-pointer px-3.5 py-2 text-[12px] font-medium ${
+                view === "list"
+                  ? "bg-fill text-fill-text"
+                  : "text-ink-soft hover:bg-paper-sunk"
+              }`}
+            >
+              List
             </button>
           </div>
         </div>
@@ -234,7 +241,7 @@ export default function EventCalendar({
           <MiniGrid
             weeks={weeks}
             selectedKey={selectedDay}
-            onSelect={setSelectedDay}
+            onSelect={setPickedDay}
           />
 
           <div className="mt-5 border-t border-rule-strong pt-4">
