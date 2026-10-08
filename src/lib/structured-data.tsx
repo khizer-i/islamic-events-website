@@ -5,6 +5,7 @@ import {
   eventEnd,
   eventTitle,
   eventUrl,
+  occurrenceEnd,
   toDate,
   type EventRow,
 } from "./events";
@@ -95,7 +96,8 @@ function schemaDate(
  */
 function schemaEndDate(start: SchemaDate, ev: EventRow): string | undefined {
   if (!start.hasTime) {
-    const end = schemaDate(ev.end_datetime_utc);
+    // occurrenceEnd, not the raw column: a series end is not this event's end.
+    const end = schemaDate(occurrenceEnd(ev)?.toISOString());
     return end && end.date > start.date ? end.date : start.date;
   }
 

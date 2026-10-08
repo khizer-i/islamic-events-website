@@ -6,6 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { GA4PageView } from "./ga4-pageview";
 import SiteHeader from "@/components/SiteHeader";
+import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
 import { SITE_URL } from "@/lib/events";
 
 const newsreader = Newsreader({
@@ -117,6 +118,14 @@ export default function RootLayout({
               <Link href="/support" className="hover:text-ink">
                 Support this project
               </Link>
+              <a
+                href={WHATSAPP_CHANNEL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-ink"
+              >
+                WhatsApp channel
+              </a>
             </nav>
             <p>© {new Date().getFullYear()} Islamic Events Calendar UK</p>
           </div>

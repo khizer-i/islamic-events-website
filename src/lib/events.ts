@@ -202,12 +202,18 @@ export const getAllEvents = cache(async (): Promise<EventRow[]> => {
   }
 });
 
-/** Events that have not finished yet (today's events stay visible all day). */
+/**
+ * Events that have not finished yet (today's events stay visible all day).
+ *
+ * Reads the end through eventEnd(), never end_datetime_utc directly: for a
+ * recurring class the stored end is the LAST DATE OF THE SERIES, which kept a
+ * talk from 21 September listed as "upcoming" until 21 November.
+ */
 export const getUpcomingEvents = cache(async (): Promise<EventRow[]> => {
   const all = await getAllEvents();
   const cutoff = Date.now() - 12 * 60 * 60 * 1000;
   return all.filter((ev) => {
-    const end = toDate(ev.end_datetime_utc) ?? toDate(ev.start_datetime_utc);
+    const end = toDate(eventEnd(ev)?.iso) ?? toDate(ev.start_datetime_utc);
     return end ? end.getTime() >= cutoff : false;
   });
 });
@@ -360,12 +366,62 @@ export const ESTIMATED_DURATION_MS = 2 * 60 * 60 * 1000;
 
 export type EventEnd = { iso: string; estimated: boolean };
 
+/**
+ * The longest a single occurrence can plausibly run (a weekend retreat or a
+ * three-day conference). A recorded end further out than this is the end of
+ * a recurring series ("every second Wednesday until 21 November"), not of
+ * the event on this page.
+ */
+export const MAX_EVENT_SPAN_MS = 3 * 24 * 60 * 60 * 1000;
+
+const ukClockFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: UK_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function ukParts(d: Date) {
+  const p = Object.fromEntries(
+    ukClockFormat.formatToParts(d).map((x) => [x.type, Number(x.value)])
+  );
+  return { y: p.year, mo: p.month, day: p.day, h: p.hour, mi: p.minute };
+}
+
+/** UK wall-clock time to an instant, correct either side of a clock change. */
+function ukWallToDate(y: number, mo: number, day: number, h: number, mi: number): Date {
+  const wallAsUtc = Date.UTC(y, mo - 1, day, h, mi);
+  const seen = ukParts(new Date(wallAsUtc));
+  const offset = Date.UTC(seen.y, seen.mo - 1, seen.day, seen.h, seen.mi) - wallAsUtc;
+  return new Date(wallAsUtc - offset);
+}
+
+/**
+ * The recorded end of THIS occurrence, or null if there isn't a usable one.
+ * When the stored end is a series end, its clock time is moved onto the
+ * start's day, so "19:30, ends 21:00 on 21 Nov" becomes 19:30 to 21:00.
+ */
+export function occurrenceEnd(ev: EventRow): Date | null {
+  const start = toDate(ev.start_datetime_utc);
+  const end = toDate(ev.end_datetime_utc);
+  if (!start || !end || end.getTime() <= start.getTime()) return null;
+  if (end.getTime() - start.getTime() <= MAX_EVENT_SPAN_MS) return end;
+
+  const s = ukParts(start);
+  const e = ukParts(end);
+  const sameDay = ukWallToDate(s.y, s.mo, s.day, e.h, e.mi);
+  return sameDay.getTime() > start.getTime() ? sameDay : null;
+}
+
 export function eventEnd(ev: EventRow): EventEnd | null {
   const start = toDate(ev.start_datetime_utc);
   if (!start) return null;
 
-  const end = toDate(ev.end_datetime_utc);
-  if (end && end.getTime() > start.getTime()) {
+  const end = occurrenceEnd(ev);
+  if (end) {
     return { iso: end.toISOString(), estimated: false };
   }
   if (!formatTime(ev.start_datetime_utc)) return null;

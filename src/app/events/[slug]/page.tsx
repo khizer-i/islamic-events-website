@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import EventCard from "@/components/EventCard";
 import RichText from "@/components/RichText";
 import ShareButtons from "@/components/ShareButtons";
+import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
 import { JsonLd, breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
 import { CATEGORIES, categoriesForEvent } from "@/lib/calendar";
 import {
@@ -232,6 +233,18 @@ export default async function EventPage({ params }: Props) {
                 </a>
               ) : null}
               <ShareButtons url={canonical} title={title} />
+              <p className="mt-1 text-[13px] leading-[1.6] text-muted">
+                Get a roundup of events like this every Thursday on{" "}
+                <a
+                  href={WHATSAPP_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent underline underline-offset-2 hover:text-accent-hover"
+                >
+                  our WhatsApp channel
+                </a>
+                .
+              </p>
             </div>
           ) : null}
 

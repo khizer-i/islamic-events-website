@@ -22,3 +22,10 @@ export const BRAND = {
   brass: "#C9A961",
   night: "#191512",
 } as const;
+
+/**
+ * The WhatsApp Channel (created 8 Oct 2026). A weekly roundup is posted there
+ * every Thursday; it is the audience-building twin of the weekly email.
+ */
+export const WHATSAPP_CHANNEL_URL =
+  "https://whatsapp.com/channel/0029Vb91V3GGOj9vh4BkeC0Z";

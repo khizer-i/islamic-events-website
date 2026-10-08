@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
+
 type State = "idle" | "sending" | "done" | "error";
 
 /**
@@ -85,6 +87,18 @@ export default function SubscribeForm({
           </h2>
           <p className="mt-2 max-w-md text-[14px] leading-[1.6] text-muted">
             {blurb}
+          </p>
+          <p className="mt-3 text-[14px] leading-[1.6] text-muted">
+            Prefer WhatsApp?{" "}
+            <a
+              href={WHATSAPP_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline underline-offset-2 hover:text-accent-hover"
+            >
+              Follow our channel
+            </a>{" "}
+            for a roundup every Thursday.
           </p>
         </div>
 
