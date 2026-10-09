@@ -4,7 +4,6 @@ import { Archivo, Newsreader } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 import Script from "next/script";
-import { GA4PageView } from "./ga4-pageview";
 import SiteHeader from "@/components/SiteHeader";
 import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
 import { SITE_URL } from "@/lib/events";
@@ -97,7 +96,6 @@ export default function RootLayout({
             `,
           }}
         />
-        <GA4PageView />
 
         <SiteHeader />
 
