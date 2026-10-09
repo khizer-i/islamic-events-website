@@ -1,8 +1,9 @@
+import { SITE_NAME } from "@/lib/brand";
 import { OG_SIZE, renderShareCard } from "@/lib/og-card";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "UK Islamic Events Calendar";
+export const alt = SITE_NAME;
 
 /**
  * The share card for every page without its own: the homepage, /events,

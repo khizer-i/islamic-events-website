@@ -4,9 +4,9 @@ import { Archivo, Newsreader } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 import Script from "next/script";
+import CurrentYear from "@/components/CurrentYear";
 import SiteHeader from "@/components/SiteHeader";
-import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
-import { SITE_URL } from "@/lib/events";
+import { SITE_NAME, SITE_URL, WHATSAPP_CHANNEL_URL } from "@/lib/brand";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -25,12 +25,12 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "UK Islamic Events Calendar — lectures, classes and community events",
-    template: "%s | UK Islamic Events Calendar",
+    default: `${SITE_NAME} — lectures, classes and community events`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
     "A free calendar of Islamic events across the UK — lectures, halaqas, classes, fundraisers and community events, collected from community posters.",
-  applicationName: "UK Islamic Events Calendar",
+  applicationName: SITE_NAME,
   keywords: [
     "islamic events",
     "islamic events UK",
@@ -43,16 +43,16 @@ export const metadata: Metadata = {
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
-    siteName: "UK Islamic Events Calendar",
+    siteName: SITE_NAME,
     locale: "en_GB",
     url: SITE_URL,
-    title: "UK Islamic Events Calendar",
+    title: SITE_NAME,
     description:
       "Lectures, halaqas, classes, fundraisers and community events across the UK.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "UK Islamic Events Calendar",
+    title: SITE_NAME,
     description:
       "Lectures, halaqas, classes, fundraisers and community events across the UK.",
   },
@@ -125,7 +125,9 @@ export default function RootLayout({
                 WhatsApp channel
               </a>
             </nav>
-            <p>© {new Date().getFullYear()} Islamic Events Calendar UK</p>
+            <p>
+              © <CurrentYear serverYear={new Date().getFullYear()} /> {SITE_NAME}
+            </p>
           </div>
         </footer>
 

@@ -68,6 +68,7 @@ The files in `supabase/` are run by hand in the Supabase SQL editor; each says a
 - `events.sql`: the `events` table as it exists, with its indexes and row-level security
 - `enable-events-rls.sql`: the read-only, published-only policy on its own
 - `recurrence.sql`: the repeating-event columns (already applied)
+- `city-names.sql`: a one-off tidy of neighbourhood and capitalised city names (the bot keeps new ones tidy)
 - `subscribers.sql`: the mailing list table. The public key may only insert an email, city and source. Safe to re-run
 
 ---
@@ -89,10 +90,10 @@ Before pushing:
 ```bash
 npx tsc --noEmit
 npm run lint
-node scripts/check-recurrence.mjs
+npm test
 ```
 
-The last one checks the site's repeat-date code against dates produced by the bot's (`scripts/recurrence-golden.json`). If the two ever disagree, the bot's Telegram draft and the site would describe different dates.
+`npm test` checks the site's repeat-date code against dates produced by the bot's (`scripts/recurrence-golden.json`). If the two ever disagree, the bot's Telegram draft and the site would describe different dates.
 
 ---
 

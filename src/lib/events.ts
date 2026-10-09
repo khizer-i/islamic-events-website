@@ -20,9 +20,10 @@ import {
   parseRule,
 } from "./recurrence";
 
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
-).replace(/\/+$/, "");
+import { SITE_URL } from "./brand";
+
+// Kept here as well as in ./brand, as most pages import it from here.
+export { SITE_URL };
 
 // Re-exported so existing imports from "@/lib/events" keep working.
 export { UK_TZ } from "./hijri";
@@ -62,13 +63,35 @@ function cleanText(value: string | null): string | null {
   return NOT_A_VALUE.has(trimmed.toLowerCase()) ? null : trimmed;
 }
 
+const SMALL_WORDS = new Set(["on", "upon", "under", "in", "le", "the", "of", "by", "and"]);
+
+/**
+ * "BRADFORD" and "bradford" to "Bradford", so a shouted city cannot make a
+ * second /cities/bradford entry. Mixed case is kept as typed. The bot does
+ * the same (and maps neighbourhoods to their town) when it saves an event;
+ * this is the safety net for rows saved before that.
+ */
+function tidyCity(value: string | null): string | null {
+  const city = cleanText(value)?.replace(/\s+/g, " ") ?? null;
+  if (!city || (city !== city.toUpperCase() && city !== city.toLowerCase())) {
+    return city;
+  }
+  return city
+    .toLowerCase()
+    .split(/([\s-]+)/)
+    .map((part, i) =>
+      i > 0 && SMALL_WORDS.has(part) ? part : part.charAt(0).toUpperCase() + part.slice(1)
+    )
+    .join("");
+}
+
 function cleanRow(ev: EventRow): EventRow {
   return {
     ...ev,
     title: cleanText(ev.title),
     organiser: cleanText(ev.organiser),
     venue_name: cleanText(ev.venue_name),
-    city: cleanText(ev.city),
+    city: tidyCity(ev.city),
     notes: cleanText(ev.notes),
     source_caption: cleanText(ev.source_caption),
     tags:

@@ -6,12 +6,13 @@ import {
   getEventBySlug,
   nextSession,
 } from "@/lib/events";
+import { SITE_NAME } from "@/lib/brand";
 import { describeRule } from "@/lib/recurrence";
 import { OG_SIZE, renderShareCard } from "@/lib/og-card";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "UK Islamic Events Calendar";
+export const alt = SITE_NAME;
 
 export const revalidate = 900;
 
@@ -45,7 +46,7 @@ export default async function OpengraphImage({
   const shown = event ? (nextSession(event) ?? event) : null;
 
   const card = {
-    title: event ? eventTitle(event) : "UK Islamic Events Calendar",
+    title: event ? eventTitle(event) : SITE_NAME,
     when: pattern ?? (shown ? formatDateLong(shown.start_datetime_utc) : ""),
     time: event ? formatTime(event.start_datetime_utc) : null,
     where: event ? eventLocationLine(event) : "",

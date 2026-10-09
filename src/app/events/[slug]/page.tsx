@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import EventCard from "@/components/EventCard";
 import RichText from "@/components/RichText";
 import ShareButtons from "@/components/ShareButtons";
-import { WHATSAPP_CHANNEL_URL } from "@/lib/brand";
+import { SITE_NAME, WHATSAPP_CHANNEL_URL } from "@/lib/brand";
 import { JsonLd, breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
 import { CATEGORIES, categoriesForEvent } from "@/lib/calendar";
 import {
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: canonical,
-      siteName: "UK Islamic Events Calendar",
+      siteName: SITE_NAME,
       locale: "en_GB",
     },
     twitter: { card: "summary_large_image", title, description },

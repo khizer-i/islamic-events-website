@@ -2,30 +2,28 @@ import type { Metadata } from "next";
 
 import SubmitEventForm from "@/components/SubmitEventForm";
 import { JsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
-import { SITE_URL } from "@/lib/events";
+import { SITE_NAME, SITE_URL } from "@/lib/brand";
 
 /* ------------------------------------------------------------------ */
 /* Other ways to send a poster, listed under the upload form. Set a     */
-/* channel to null and it disappears; with all null the section hides. */
-/* Email was removed in Oct 2026: the domain's mailbox no longer        */
-/* exists, so anything sent there was lost.                             */
+/* channel and it appears; with both null the section is hidden. There  */
+/* is deliberately no Telegram option: the bot only listens to the      */
+/* moderator's chat, so posters sent to it by anyone else are ignored.  */
 /* ------------------------------------------------------------------ */
 const CHANNELS = {
   whatsapp: null as string | null, // e.g. "447700900123" (no +, no spaces)
-  telegram: null as string | null, // e.g. "islamiceventsukbot"
-  email: null as string | null, // e.g. "events@islamiceventscalendar.co.uk"
   instagram: null as string | null, // e.g. "islamiceventscalendar"
 };
 
 export const metadata: Metadata = {
   title: "Add your event",
   description:
-    "List your Islamic event on the UK Islamic Events Calendar for free. Upload the poster, check the details we read from it, and send it in. No account needed.",
+    `List your Islamic event on the ${SITE_NAME} for free. Upload the poster, check the details we read from it, and send it in. No account needed.`,
   alternates: { canonical: `${SITE_URL}/submit` },
   // Its own share card: this is the link sent to organisers, and without
   // these it showed the homepage's title and URL.
   openGraph: {
-    title: "Add your event to the UK Islamic Events Calendar",
+    title: `Add your event to the ${SITE_NAME}`,
     description:
       "Free. Upload the poster, check the details we read from it, and send it in.",
     images: ["/opengraph-image"],
@@ -104,28 +102,12 @@ export default function SubmitPage() {
                 action="Open WhatsApp"
               />
             ) : null}
-            {CHANNELS.telegram ? (
-              <Channel
-                label="Telegram"
-                detail="Send the poster to our bot."
-                href={`https://t.me/${CHANNELS.telegram}`}
-                action="Open Telegram"
-              />
-            ) : null}
             {CHANNELS.instagram ? (
               <Channel
                 label="Instagram"
                 detail="Send the post or poster as a DM."
                 href={`https://instagram.com/${CHANNELS.instagram}`}
                 action="Open Instagram"
-              />
-            ) : null}
-            {CHANNELS.email ? (
-              <Channel
-                label="Email"
-                detail="Attach the poster. A caption helps but is not needed."
-                href={`mailto:${CHANNELS.email}?subject=Event%20submission`}
-                action="Send email"
               />
             ) : null}
           </ul>

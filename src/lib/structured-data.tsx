@@ -10,7 +10,7 @@ import {
   type EventRow,
 } from "./events";
 
-const SITE_NAME = "UK Islamic Events Calendar";
+import { SITE_NAME } from "./brand";
 
 type Json = Record<string, unknown>;
 

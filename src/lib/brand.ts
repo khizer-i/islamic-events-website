@@ -23,6 +23,18 @@ export const BRAND = {
   night: "#191512",
 } as const;
 
+/** The site's name, used in titles, share cards and structured data. */
+export const SITE_NAME = "UK Islamic Events Calendar";
+
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
+).replace(/\/+$/, "");
+
+/** Forwards to Khizer's own inbox (Cloudflare Email Routing). */
+export const CONTACT_EMAIL = "contact@islamiceventscalendar.co.uk";
+
+export const PAYPAL_URL = "https://paypal.me/islamiceventsuk";
+
 /**
  * The WhatsApp Channel (created 8 Oct 2026). A weekly roundup is posted there
  * every Thursday; it is the audience-building twin of the weekly email.

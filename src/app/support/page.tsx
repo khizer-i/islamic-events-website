@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { SITE_URL } from "@/lib/events";
+import { CONTACT_EMAIL, PAYPAL_URL, SITE_NAME, SITE_URL } from "@/lib/brand";
 
-// NOTE: this address is on a domain mailbox that is no longer active.
-// Set up free forwarding (Cloudflare Email Routing) or change it — as it
-// stands, everyone who writes in gets a bounce.
-const EMAIL = "contact@islamiceventscalendar.co.uk";
+const EMAIL = CONTACT_EMAIL;
 
 export const metadata: Metadata = {
   title: "Support this project",
   description:
-    "How to support the UK Islamic Events Calendar — donations, sponsorship and getting in touch.",
+    `How to support the ${SITE_NAME} — donations, sponsorship and getting in touch.`,
   alternates: { canonical: `${SITE_URL}/support` },
   openGraph: {
-    title: "Support the UK Islamic Events Calendar",
+    title: `Support the ${SITE_NAME}`,
     description: "Donations, sponsorship and getting in touch.",
     images: ["/opengraph-image"],
     url: `${SITE_URL}/support`,
@@ -49,7 +46,7 @@ export default function SupportPage() {
           A simple way to contribute towards hosting and running costs.
         </p>
         <a
-          href="https://paypal.me/islamiceventsuk"
+          href={PAYPAL_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex h-12 items-center justify-center bg-fill px-6 text-[14px] font-medium text-fill-text transition-opacity hover:opacity-85"

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-import { BRAND, LOGO_PATH, LOGO_VIEWBOX } from "@/lib/brand";
+import { BRAND, LOGO_PATH, LOGO_VIEWBOX, SITE_NAME } from "@/lib/brand";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -67,7 +67,7 @@ export async function renderShareCard({
                   color: BRAND.oxblood,
                 }}
               >
-                UK Islamic Events Calendar
+                {SITE_NAME}
               </div>
             </div>
 
