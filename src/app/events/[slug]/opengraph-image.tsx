@@ -15,6 +15,16 @@ export const alt = "UK Islamic Events Calendar";
 
 export const revalidate = 900;
 
+/**
+ * None at build time, but having this at all makes each card static: made
+ * on its first request, then cached and refreshed every 15 minutes. Without
+ * it the card was redrawn, with a full read of the events table, every time
+ * a link was previewed on WhatsApp or anywhere else.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
 /** The share card for one event. The design lives in lib/og-card.tsx. */
 export default async function OpengraphImage({
   params,

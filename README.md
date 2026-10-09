@@ -1,75 +1,76 @@
 # UK Islamic Events Calendar (Web)
 
-This is the **public website** for the UK Islamic Events Calendar.
+This is the **public website** for the UK Islamic Events Calendar, islamiceventscalendar.co.uk.
 
-It displays Islamic events across the UK in a modern calendar interface, powered by Supabase and updated automatically by a private backend bot.
+It lists Islamic events across the UK, read from community posters by a private backend bot and approved by a person before they appear. Deployed on Vercel.
 
-> This repo contains **only** the frontend (Next.js) code and uses the Supabase **anon** key.  
-> The private bot/backend lives in a separate private repo.
+> This repo contains **only** the website (Next.js). It reads events with the Supabase **anon** key, which row-level security limits to published events.
+> The bot, which writes events and handles moderation in Telegram, lives in a separate private repo.
 
 ---
 
-## Features
+## What is on the site
 
-- Month / Week / List calendar views
-- Dual date display:
-  - Gregorian dates
-  - Hijri dates (transliterated), shown subtly in each day cell and in the "Today" line
-- Clickable events with a **poster modal**:
-  - Poster image
-  - Caption (if present)
-  - Venue, city, organiser, tags, notes
-- Filters:
-  - Filter by city
-  - Filter by tags (multi-select)
-  - Reset filters button
-- Dark mode / light mode:
-  - Follows the user’s system preference
-- UK conventions:
-  - Week starts on **Monday**
-  - Dates in `dd/mm` style in week/list views
-- “Support this project” button in the header
+- **Calendar (home page):** the next six weeks, as a month grid on desktop and a compact grid with the chosen day's events on a phone. A list view is one tap away. Filter by city and by category.
+- **Event pages** (`/events/<title>-<id>`): poster, times in UK time, Hijri date, venue, "Add to Google Calendar", share buttons, and Google Event structured data. A timed event with no end printed shows an estimated two-hour end, labelled as estimated.
+- **Repeating events:** a weekly class or course is one listing. It appears once in lists at its next session, on every date it runs in the calendar, and its page lists the coming dates.
+- **Upcoming list** (`/events`), **cities** (`/cities`, `/cities/<city>`), **support** (`/support`), sitemap and robots.
+- **Add your event** (`/submit`): upload a poster, check the details the bot read from it (including how it repeats), and send it in for review. Protected by Cloudflare Turnstile.
+- **Mailing list sign-up** (`/api/subscribe`) into the `subscribers` table.
+- **Share cards:** generated images for the site and for every event.
+- Light and dark themes follow the visitor's system setting. Weeks start on Monday, dates are UK style.
+
+Hijri dates come from a hand-kept table of UK moon-sighting announcements in `src/lib/hijri.ts`. **Add a row at the start of every Hijri month**; past the end of the table the site falls back to a calculated estimate.
 
 ---
 
 ## Tech stack
 
-- **Framework**: Next.js (App Router, TypeScript)
-- **UI**: React, Tailwind CSS
-- **Calendar**: FullCalendar (dayGrid, timeGrid, list)
-- **Data**: Supabase (PostgreSQL)
-- **Hijri dates**: `moment-hijri`
-
-The backend that:
-- receives the event information,
-- runs OCR and AI extraction
-- writes to Supabase
-
-is not part of this repo.
+- **Framework:** Next.js 16 (App Router, Turbopack, React compiler), TypeScript
+- **UI:** React 19, Tailwind CSS 4
+- **Data:** Supabase (PostgreSQL + Storage), read at build time and refreshed with ISR every 10 to 60 minutes
+- **Hosting:** Vercel, with a daily cron (`vercel.json`)
+- **Analytics:** Google Analytics 4 and Vercel Analytics
 
 ---
 
 ## Requirements
 
-- Node.js 18+
-- npm / pnpm / yarn
-- A Supabase project with:
-  - `events` table (readable by anon key)
-  - `event-posters` public storage bucket
+- Node.js 20.9 or later
+- npm
+- A Supabase project with the tables in `supabase/` (see below) and a public `event-posters` storage bucket
 
 ---
 
 ## Environment variables
 
-Create a `.env.local` file in the project root:
+Set these in Vercel, and in `.env.local` for local development (never committed):
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL= https://<your-project>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY= <your-anon-key>
-```
-Notes:
-- These are public keys intended for frontend usage.
-- Do not put the Supabase service role key here.
+| Variable | Required | What it is |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Public by design |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public by design. Never put the service role key here |
+| `NEXT_PUBLIC_SITE_URL` | no | Defaults to `https://www.islamiceventscalendar.co.uk` |
+| `BOT_API_URL` | for submissions | The bot's base URL on Render |
+| `BOT_API_SECRET` | for submissions | Shared with the bot, where it is `WEB_API_SECRET` |
+| `TURNSTILE_SITE_KEY` | in production | Cloudflare Turnstile. Deliberately not `NEXT_PUBLIC_`: the server passes it to the form |
+| `TURNSTILE_SECRET_KEY` | in production | Cloudflare Turnstile |
+| `CRON_SECRET` | in production | Vercel sends it to `/api/cron/series-check` |
+
+Without the Turnstile keys, submissions work locally but are switched off in production.
+
+---
+
+## Database
+
+The files in `supabase/` are run by hand in the Supabase SQL editor; each says at the top when and whether to run it.
+
+- `events.sql`: the `events` table as it exists, with its indexes and row-level security
+- `enable-events-rls.sql`: the read-only, published-only policy on its own
+- `recurrence.sql`: the repeating-event columns (already applied)
+- `subscribers.sql`: the mailing list table. The public key may only insert an email, city and source. Safe to re-run
+
+---
 
 ## Running locally
 
@@ -82,9 +83,24 @@ Start the dev server:
 ```bash
 npm run dev
 ```
-Then open:
+Then open http://localhost:3000.
+
+Before pushing:
 ```bash
-http://localhost:3000
+npx tsc --noEmit
+npm run lint
+node scripts/check-recurrence.mjs
 ```
+
+The last one checks the site's repeat-date code against dates produced by the bot's (`scripts/recurrence-golden.json`). If the two ever disagree, the bot's Telegram draft and the site would describe different dates.
+
+---
+
+## Cron
+
+`vercel.json` runs `/api/cron/series-check` daily at 08:00 UTC. It asks the bot to message the moderator about repeating events, listed with no end date, that are about to drop off the site.
+
+---
+
 ## License
 All rights reserved.

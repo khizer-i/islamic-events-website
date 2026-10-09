@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import AgendaList from "./AgendaList";
 import MiniGrid from "./MiniGrid";
@@ -26,13 +26,18 @@ const SELECTED_DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
   month: "long",
 });
 
+const noSubscription = () => () => {};
+
 export default function EventCalendar({
   events,
   cities,
+  serverToday,
   weekCount = 6,
 }: {
   events: CalendarEvent[];
   cities: string[];
+  /** The UK day the page was rendered on (YYYY-MM-DD). */
+  serverToday: string;
   weekCount?: number;
 }) {
   // Calendar first on every screen size (Oct 2026). It used to be the list
@@ -42,9 +47,17 @@ export default function EventCalendar({
   const [category, setCategory] = useState<string | null>(null);
   const pendingScroll = useRef<string | null>(null);
 
-  // Fixed for the life of the page so the grid can't shift under the user.
-  const [now] = useState(() => new Date());
-  const todayKey = useMemo(() => ukDayKey(now), [now]);
+  // "Today" is the server's day while the page hydrates and the visitor's
+  // after that. The page is cached for up to 10 minutes, so after midnight
+  // the cached HTML still says yesterday; reading the browser's clock during
+  // hydration made React discard the server HTML and re-render the whole
+  // calendar. useSyncExternalStore is React's way of doing exactly this.
+  const todayKey = useSyncExternalStore(
+    noSubscription,
+    () => ukDayKey(new Date()),
+    () => serverToday
+  );
+  const now = useMemo(() => dateFromDayKey(todayKey), [todayKey]);
   const tomorrowKey = useMemo(
     () => ukDayKey(addDays(dateFromDayKey(todayKey), 1)),
     [todayKey]
@@ -71,17 +84,22 @@ export default function EventCalendar({
   );
 
   const days = useMemo(() => weeks.flatMap((w) => w.days), [weeks]);
-  // Counted over the same six weeks as the total below, so "Sisters 14" can
-  // never sit beside "13 events". (A series contributes one per session.)
+  // Counted over the same six weeks and the same city as the total below,
+  // so "Sisters 14" can never sit beside "3 events". The category filter
+  // itself is left out, or picking one would zero all the others. (A series
+  // contributes one per session.)
   const windowKeys = useMemo(() => new Set(days.map((d) => d.key)), [days]);
   const categories = useMemo(
     () =>
       categoryCounts(
         events.filter(
-          (ev) => ev.startUtc && windowKeys.has(ukDayKey(new Date(ev.startUtc)))
+          (ev) =>
+            (city === "ALL" || ev.city === city) &&
+            ev.startUtc &&
+            windowKeys.has(ukDayKey(new Date(ev.startUtc)))
         )
       ),
-    [events, windowKeys]
+    [events, city, windowKeys]
   );
   // Counted from the window, not the filter, so it matches what is on screen.
   const total = useMemo(
@@ -141,6 +159,7 @@ export default function EventCalendar({
           <div className="flex overflow-hidden border border-rule-strong">
             <button
               type="button"
+              aria-pressed={view === "calendar"}
               onClick={() => setView("calendar")}
               className={`cursor-pointer px-3.5 py-2 text-[12px] font-medium ${
                 view === "calendar"
@@ -152,6 +171,7 @@ export default function EventCalendar({
             </button>
             <button
               type="button"
+              aria-pressed={view === "list"}
               onClick={() => setView("list")}
               className={`cursor-pointer px-3.5 py-2 text-[12px] font-medium ${
                 view === "list"
@@ -170,6 +190,7 @@ export default function EventCalendar({
         <div className="flex flex-wrap items-center gap-1.5 border-b border-rule py-3">
           <button
             type="button"
+            aria-pressed={category === null}
             onClick={() => setCategory(null)}
             className={`cursor-pointer border px-3 py-1.5 text-[12px] ${
               category === null
@@ -183,6 +204,7 @@ export default function EventCalendar({
             <button
               key={cat.id}
               type="button"
+              aria-pressed={category === cat.id}
               onClick={() => setCategory(cat.id === category ? null : cat.id)}
               className={`cursor-pointer border px-3 py-1.5 text-[12px] ${
                 category === cat.id

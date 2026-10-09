@@ -22,6 +22,15 @@ export const metadata: Metadata = {
   description:
     "List your Islamic event on the UK Islamic Events Calendar for free. Upload the poster, check the details we read from it, and send it in. No account needed.",
   alternates: { canonical: `${SITE_URL}/submit` },
+  // Its own share card: this is the link sent to organisers, and without
+  // these it showed the homepage's title and URL.
+  openGraph: {
+    title: "Add your event to the UK Islamic Events Calendar",
+    description:
+      "Free. Upload the poster, check the details we read from it, and send it in.",
+    images: ["/opengraph-image"],
+    url: `${SITE_URL}/submit`,
+  },
 };
 
 function Channel({

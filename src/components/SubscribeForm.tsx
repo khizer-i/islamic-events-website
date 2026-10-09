@@ -162,7 +162,9 @@ export default function SubscribeForm({
           </div>
 
           {state === "error" && message ? (
-            <p className="text-[13px] text-accent">{message}</p>
+            <p role="alert" className="text-[13px] text-accent">
+              {message}
+            </p>
           ) : null}
 
           <p className="text-[12px] leading-[1.5] text-faint">

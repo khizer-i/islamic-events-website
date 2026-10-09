@@ -1,6 +1,18 @@
 import { cache } from "react";
 import { supabase } from "./supabaseClient";
-import { hijriLong, UK_TZ } from "./hijri";
+import { UK_TZ } from "./hijri";
+import {
+  type EventRow,
+  citySlug,
+  eventLocationLine,
+  eventSlug,
+  eventTitle,
+  eventUrl,
+  formatDateLong,
+  formatTime,
+  monthKey,
+  toDate,
+} from "./event-format";
 import {
   calendarRrule,
   describeRule,
@@ -12,135 +24,9 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://www.islamiceventscalendar.co.uk"
 ).replace(/\/+$/, "");
 
-// Both now live in ./hijri, re-exported here so existing imports keep working.
-export { UK_TZ, HIJRI_MONTHS } from "./hijri";
-
-export type EventRow = {
-  id: string;
-  title: string | null;
-  organiser: string | null;
-  start_datetime_utc: string | null;
-  end_datetime_utc: string | null;
-  venue_name: string | null;
-  city: string | null;
-  tags: string[] | null;
-  notes: string | null;
-  poster_url: string | null;
-  source_caption: string | null;
-  status: string | null;
-  /** Repeating events (Oct 2026). Optional so rows from before the
-   *  recurrence columns existed still type-check. See lib/recurrence.ts. */
-  recurrence_rule?: string | null;
-  recurrence_text?: string | null;
-  recurrence_open?: boolean | null;
-  /** Not a column: set on a copy moved to one session of a series (see
-   *  atSession), holding the series' first start. */
-  series_start_utc?: string | null;
-};
-
-/* ------------------------------------------------------------------ */
-/* Slugs                                                               */
-/* ------------------------------------------------------------------ */
-
-export function slugifyText(input: string): string {
-  return input
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/['‘’ʻʼ]/g, "")
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 70)
-    .replace(/-+$/g, "");
-}
-
-/** Stable short hash so every event gets a unique, permanent URL. */
-function shortHash(id: string): string {
-  let h = 5381;
-  for (let i = 0; i < id.length; i++) {
-    h = ((h * 33) ^ id.charCodeAt(i)) >>> 0;
-  }
-  return h.toString(36).slice(0, 6).padStart(6, "0");
-}
-
-export function eventSlug(ev: Pick<EventRow, "id" | "title">): string {
-  const base = slugifyText(ev.title || "") || "islamic-event";
-  return `${base}-${shortHash(ev.id)}`;
-}
-
-export function eventUrl(ev: Pick<EventRow, "id" | "title">): string {
-  return `/events/${eventSlug(ev)}`;
-}
-
-export function citySlug(city: string): string {
-  return slugifyText(city);
-}
-
-export function cityUrl(city: string): string {
-  return `/cities/${citySlug(city)}`;
-}
-
-/* ------------------------------------------------------------------ */
-/* Dates                                                               */
-/* ------------------------------------------------------------------ */
-
-export function toDate(iso: string | null | undefined): Date | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-export function formatDateLong(iso: string | null | undefined): string {
-  const d = toDate(iso);
-  if (!d) return "Date to be confirmed";
-  return d.toLocaleDateString("en-GB", {
-    timeZone: UK_TZ,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-export function formatDateShort(iso: string | null | undefined): string {
-  const d = toDate(iso);
-  if (!d) return "TBC";
-  return d.toLocaleDateString("en-GB", {
-    timeZone: UK_TZ,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-export function formatTime(iso: string | null | undefined): string | null {
-  const d = toDate(iso);
-  if (!d) return null;
-  const t = d.toLocaleTimeString("en-GB", {
-    timeZone: UK_TZ,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  // Midnight almost always means "time unknown" from the poster extraction.
-  return t === "00:00" ? null : t;
-}
-
-export function formatHijri(iso: string | null | undefined): string | null {
-  const d = toDate(iso);
-  if (!d) return null;
-  return hijriLong(d);
-}
-
-export function monthKey(iso: string | null | undefined): string {
-  const d = toDate(iso);
-  if (!d) return "Dates to be confirmed";
-  return d.toLocaleDateString("en-GB", {
-    timeZone: UK_TZ,
-    month: "long",
-    year: "numeric",
-  });
-}
+// Re-exported so existing imports from "@/lib/events" keep working.
+export { UK_TZ } from "./hijri";
+export * from "./event-format";
 
 /* ------------------------------------------------------------------ */
 /* Queries                                                             */
@@ -195,9 +81,17 @@ function cleanRow(ev: EventRow): EventRow {
 /**
  * All published events. Cached per-request by React, and the routes that use
  * it set their own `revalidate`, so this hits Supabase rarely.
- * Never throws: a Supabase outage must not break the build or the site.
+ *
+ * A failed read THROWS at runtime. Next then keeps serving the last good
+ * version of the page and retries on the next request, whereas returning []
+ * used to cache an empty calendar, and "not found" event pages that Google
+ * recorded, until the next revalidation. During `next build` it still
+ * returns [], so a Supabase outage cannot stop a deploy.
  */
+const BUILDING = process.env.NEXT_PHASE === "phase-production-build";
+
 export const getAllEvents = cache(async (): Promise<EventRow[]> => {
+  let failure: string;
   try {
     const { data, error } = await supabase
       .from("events")
@@ -205,15 +99,14 @@ export const getAllEvents = cache(async (): Promise<EventRow[]> => {
       .eq("status", "published")
       .order("start_datetime_utc", { ascending: true });
 
-    if (error) {
-      console.error("Supabase error loading events:", error.message);
-      return [];
-    }
-    return ((data ?? []) as EventRow[]).map(cleanRow);
+    if (!error) return ((data ?? []) as EventRow[]).map(cleanRow);
+    failure = error.message;
   } catch (err) {
-    console.error("Supabase request failed:", err);
-    return [];
+    failure = err instanceof Error ? err.message : String(err);
   }
+  console.error("Loading events from Supabase failed:", failure);
+  if (BUILDING) return [];
+  throw new Error(`Could not load events: ${failure}`);
 });
 
 /* ------------------------------------------------------------------ */
@@ -251,24 +144,48 @@ export function eventSessions(ev: EventRow): EventRow[] {
   );
 }
 
-/** Today's events stay visible all day: anything ending in the last 12 hours counts. */
-function upcomingCutoff(): number {
-  return Date.now() - 12 * 60 * 60 * 1000;
-}
+/**
+ * A timed event stays listed for 12 hours after it ends, so tonight's talk
+ * is still there when someone looks it up afterwards.
+ */
+const LISTED_AFTER_END_MS = 12 * 60 * 60 * 1000;
 
 /**
- * Reads the end through eventEnd(), never end_datetime_utc directly: older
- * rows for a recurring class stored the LAST DATE OF THE SERIES there, which
- * kept a talk from 21 September listed as "upcoming" until 21 November.
+ * When an event drops off the upcoming lists, as ms since the epoch.
+ *
+ * Reads the end through occurrenceEnd(), never end_datetime_utc directly:
+ * older rows for a recurring class stored the LAST DATE OF THE SERIES there,
+ * which kept a talk from 21 September listed as "upcoming" until 21 November.
+ *
+ * An event with no time printed (midnight) is listed until the end of its
+ * last UK day. It used to count as ending at its 00:00 start, so it dropped
+ * off the site at noon on the day itself. A timed event with no end uses
+ * the same two-hour estimate as eventEnd().
  */
-function stillOn(ev: EventRow, cutoff: number): boolean {
-  const end = toDate(eventEnd(ev)?.iso) ?? toDate(ev.start_datetime_utc);
-  return end ? end.getTime() >= cutoff : false;
+function listedUntil(ev: EventRow): number | null {
+  const start = toDate(ev.start_datetime_utc);
+  if (!start) return null;
+  const end = occurrenceEnd(ev);
+  // A midnight end is a date with no time ("29th & 30th August"), so it
+  // means the whole of that day, like a midnight start.
+  if (end && formatTime(end.toISOString())) {
+    return end.getTime() + LISTED_AFTER_END_MS;
+  }
+  if (!end && formatTime(ev.start_datetime_utc)) {
+    return start.getTime() + ESTIMATED_DURATION_MS + LISTED_AFTER_END_MS;
+  }
+  const last = ukParts(end ?? start);
+  return ukWallToDate(last.y, last.mo, last.day, 23, 59).getTime();
+}
+
+function stillOn(ev: EventRow, now: number): boolean {
+  const until = listedUntil(ev);
+  return until !== null && until >= now;
 }
 
 /** The next session that has not finished, or null once the series is over. */
-export function nextSession(ev: EventRow, cutoff = upcomingCutoff()): EventRow | null {
-  return eventSessions(ev).find((s) => stillOn(s, cutoff)) ?? null;
+export function nextSession(ev: EventRow, now = Date.now()): EventRow | null {
+  return eventSessions(ev).find((s) => stillOn(s, now)) ?? null;
 }
 
 const byStart = (a: EventRow, b: EventRow) =>
@@ -281,13 +198,13 @@ const byStart = (a: EventRow, b: EventRow) =>
  */
 export const getUpcomingEvents = cache(async (): Promise<EventRow[]> => {
   const all = await getAllEvents();
-  const cutoff = upcomingCutoff();
+  const now = Date.now();
   const out: EventRow[] = [];
   for (const ev of all) {
     if (isSeries(ev)) {
-      const next = nextSession(ev, cutoff);
+      const next = nextSession(ev, now);
       if (next) out.push(next);
-    } else if (stillOn(ev, cutoff)) {
+    } else if (stillOn(ev, now)) {
       out.push(ev);
     }
   }
@@ -301,13 +218,13 @@ export const getUpcomingEvents = cache(async (): Promise<EventRow[]> => {
 export const getCalendarSessions = cache(
   async (days = 49): Promise<EventRow[]> => {
     const all = await getAllEvents();
-    const cutoff = upcomingCutoff();
-    const horizon = Date.now() + days * 86_400_000;
+    const now = Date.now();
+    const horizon = now + days * 86_400_000;
     const out: EventRow[] = [];
     for (const ev of all) {
       for (const s of eventSessions(ev)) {
         const start = toDate(s.start_datetime_utc)?.getTime();
-        if (start !== undefined && start <= horizon && stillOn(s, cutoff)) out.push(s);
+        if (start !== undefined && start <= horizon && stillOn(s, now)) out.push(s);
       }
     }
     return out.sort(byStart);
@@ -420,20 +337,8 @@ export async function getRelatedEvents(
 /* Presentation helpers                                                */
 /* ------------------------------------------------------------------ */
 
-export function formatTagLabel(tag: string): string {
-  return tag
-    .split(" ")
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
-}
 
-export function eventTitle(ev: EventRow): string {
-  return ev.title?.trim() || "Islamic event";
-}
 
-export function eventLocationLine(ev: EventRow): string {
-  return [ev.venue_name, ev.city].filter(Boolean).join(", ");
-}
 
 /** Short human description used for meta descriptions and cards. */
 export function eventDescription(ev: EventRow): string {

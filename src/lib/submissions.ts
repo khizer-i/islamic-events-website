@@ -14,8 +14,7 @@ const BOT_API_URL = (process.env.BOT_API_URL || "").replace(/\/+$/, "");
 const BOT_API_SECRET = process.env.BOT_API_SECRET || "";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
 
-/** Base64 of the resized JPEG. The browser keeps it well under this. */
-export const MAX_IMAGE_CHARS = 8_000_000;
+export { MAX_IMAGE_CHARS } from "./upload-limits";
 
 export function jsonError(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });

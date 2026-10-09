@@ -4,6 +4,20 @@ import type { CalendarWeek } from "@/lib/calendar";
 
 const INITIALS = ["M", "T", "W", "T", "F", "S", "S"];
 
+/** "Wednesday 14 October" for a day's button, read out by screen readers. */
+const DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+function dayLabel(date: Date, count: number): string {
+  const events =
+    count === 0 ? "nothing listed" : `${count} event${count === 1 ? "" : "s"}`;
+  return `${DAY_LABEL.format(date)}, ${events}`;
+}
+
 /**
  * The grid on a phone. Seven columns on a 390px screen leaves ~50px a cell,
  * which fits a number and nothing else — so here the grid is navigation
@@ -25,6 +39,7 @@ export default function MiniGrid({
         {INITIALS.map((letter, i) => (
           <div
             key={i}
+            aria-hidden
             className="text-center text-[10px] tracking-[0.08em] text-faint"
           >
             {letter}
@@ -44,6 +59,7 @@ export default function MiniGrid({
                 type="button"
                 onClick={() => onSelect(day.key)}
                 aria-pressed={selected}
+                aria-label={dayLabel(day.date, day.events.length)}
                 className={[
                   "flex h-11 cursor-pointer flex-col items-center justify-center gap-1 transition-colors",
                   selected ? "bg-accent" : "hover:bg-paper-sunk",

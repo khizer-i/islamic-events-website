@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   description:
     "How to support the UK Islamic Events Calendar — donations, sponsorship and getting in touch.",
   alternates: { canonical: `${SITE_URL}/support` },
+  openGraph: {
+    title: "Support the UK Islamic Events Calendar",
+    description: "Donations, sponsorship and getting in touch.",
+    images: ["/opengraph-image"],
+    url: `${SITE_URL}/support`,
+  },
 };
 
 export default function SupportPage() {

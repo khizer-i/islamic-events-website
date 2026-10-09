@@ -34,12 +34,28 @@ alter table public.subscribers enable row level security;
 
 -- Insert only. No select policy exists, so the list is not readable with the
 -- public key even though that key ships in the browser bundle.
+--
+-- The public key can be used to call Supabase directly, skipping the site's
+-- route and its checks, so the database enforces them itself (Oct 2026):
+-- the public may set ONLY email, city and source, every other column keeps
+-- its default (so nobody can insert a row already "confirmed", or choose
+-- its confirm_token), and the values must look like what the form sends.
+-- Safe to re-run.
+revoke insert on public.subscribers from anon, authenticated;
+grant insert (email, city, source) on public.subscribers to anon, authenticated;
+
 drop policy if exists "public can subscribe" on public.subscribers;
 create policy "public can subscribe"
   on public.subscribers
   for insert
   to anon, authenticated
-  with check (true);
+  with check (
+    char_length(email) between 6 and 254
+    and email = lower(email)
+    and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]{2,}$'
+    and (city is null or char_length(city) <= 80)
+    and char_length(source) <= 60
+  );
 
 
 -- Handy for later: the current mailing list.

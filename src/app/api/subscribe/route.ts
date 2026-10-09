@@ -71,8 +71,11 @@ export async function POST(request: Request) {
 
   const record = {
     email: clean,
+    // The database refuses longer values (supabase/subscribers.sql).
     city:
-      typeof city === "string" && city.trim() !== "" ? city.trim() : null,
+      typeof city === "string" && city.trim() !== ""
+        ? city.trim().slice(0, 80)
+        : null,
     source:
       typeof source === "string" && source.trim() !== ""
         ? source.trim().slice(0, 60)

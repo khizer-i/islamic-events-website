@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   description:
     "Browse Islamic events by UK city — London, Birmingham, Manchester, Leicester, Bradford and more.",
   alternates: { canonical: `${SITE_URL}/cities` },
+  openGraph: {
+    title: "Islamic events by city",
+    description:
+      "Browse Islamic events by UK city: London, Birmingham, Manchester, Leicester, Bradford and more.",
+    images: ["/opengraph-image"],
+    url: `${SITE_URL}/cities`,
+  },
 };
 
 export default async function CitiesPage() {

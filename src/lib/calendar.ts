@@ -1,14 +1,16 @@
 import { hijriShort } from "./hijri";
 import { repeatLabel } from "./recurrence";
+import { UK_TZ } from "./hijri";
+// event-format, not events: this module runs in the browser (EventCalendar),
+// and events.ts would bring the Supabase client with it.
 import {
-  UK_TZ,
   type EventRow,
   eventLocationLine,
   eventSlug,
   eventTitle,
   formatTime,
   toDate,
-} from "./events";
+} from "./event-format";
 
 /**
  * The slice of an event the calendar UI needs. The full row carries OCR text

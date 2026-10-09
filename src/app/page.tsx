@@ -3,7 +3,7 @@ import Link from "next/link";
 import EventCalendar from "@/components/EventCalendar";
 import SubscribeForm from "@/components/SubscribeForm";
 import { JsonLd, eventListJsonLd, websiteJsonLd } from "@/lib/structured-data";
-import { toCalendarEvent } from "@/lib/calendar";
+import { toCalendarEvent, ukDayKey } from "@/lib/calendar";
 import {
   cityUrl,
   getCalendarSessions,
@@ -49,7 +49,11 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <EventCalendar events={calendarEvents} cities={cities} />
+      <EventCalendar
+        events={calendarEvents}
+        cities={cities}
+        serverToday={ukDayKey(new Date())}
+      />
 
       {activeCities.length > 0 ? (
         <section className="mt-14 border-t border-rule pt-8">

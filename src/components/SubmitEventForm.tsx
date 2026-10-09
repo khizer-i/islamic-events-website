@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState } from "react";
 
+import { MAX_IMAGE_CHARS } from "@/lib/upload-limits";
 import {
   DAY_CODES,
   type DayCode,
@@ -44,9 +45,8 @@ declare global {
 const TURNSTILE_SRC =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-/** Big enough to read small print, small enough for Vercel's 4.5 MB limit. */
+/** Big enough to read small print; shrunk further only if still too big. */
 const MAX_SIDE = 2000;
-const MAX_DATA_URL = 4_000_000;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -58,35 +58,42 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Re-encodes the poster as a JPEG no larger than MAX_SIDE on its long edge.
- * Phone photos are often 5 to 10 MB, which is over what a Vercel function
- * accepts, and the model gains nothing from more than this.
+ * Re-encodes the poster as a JPEG no larger than MAX_SIDE on its long edge,
+ * and small enough to send (MAX_IMAGE_CHARS). Phone photos are often 5 to
+ * 10 MB, which is over what a Vercel function accepts, and the model gains
+ * nothing from more than this. Quality is lowered first, then the size.
  */
 async function toJpeg(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = await loadImage(url);
-    const scale = Math.min(
-      1,
-      MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight)
-    );
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("no canvas");
-    // Transparent PNGs would otherwise turn black as JPEG.
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    let quality = 0.85;
-    let dataUrl = canvas.toDataURL("image/jpeg", quality);
-    while (dataUrl.length > MAX_DATA_URL && quality > 0.5) {
-      quality -= 0.15;
-      dataUrl = canvas.toDataURL("image/jpeg", quality);
+    let side = MAX_SIDE;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const scale = Math.min(
+        1,
+        side / Math.max(img.naturalWidth, img.naturalHeight)
+      );
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      // Transparent PNGs would otherwise turn black as JPEG.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      for (const quality of [0.85, 0.7, 0.55]) {
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        // The limit is on the base64 part, which is what gets sent.
+        if (dataUrl.length - dataUrl.indexOf(",") - 1 <= MAX_IMAGE_CHARS) {
+          return dataUrl;
+        }
+      }
+      side = Math.round(side * 0.75);
     }
-    return dataUrl;
+    throw new Error("too large");
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -485,9 +492,11 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
     }
     try {
       setPoster(await toJpeg(file));
-    } catch {
+    } catch (e) {
       setError(
-        "That image couldn't be opened. Please try a JPG or PNG, or take a screenshot of the poster."
+        e instanceof Error && e.message === "too large"
+          ? "That image is too detailed to send. Please take a screenshot of the poster and upload that."
+          : "That image couldn't be opened. Please try a JPG or PNG, or take a screenshot of the poster."
       );
     }
   };
@@ -742,7 +751,11 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
               />
             </Field>
 
-            {error ? <p className="text-[13px] text-accent">{error}</p> : null}
+            {error ? (
+              <p role="alert" className="text-[13px] text-accent">
+                {error}
+              </p>
+            ) : null}
 
             <div className="flex flex-wrap items-center gap-4 pt-1">
               <button
@@ -831,7 +844,11 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
                 />
               </Field>
 
-              {error ? <p className="text-[13px] text-accent">{error}</p> : null}
+              {error ? (
+                <p role="alert" className="text-[13px] text-accent">
+                  {error}
+                </p>
+              ) : null}
 
               <button
                 type="button"
