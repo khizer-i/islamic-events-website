@@ -21,6 +21,7 @@ import {
 } from "./recurrence";
 
 import { SITE_URL } from "./brand";
+import { buildIcs } from "./ics";
 
 // Kept here as well as in ./brand, as most pages import it from here.
 export { SITE_URL };
@@ -516,6 +517,31 @@ export function googleCalendarUrl(ev: EventRow): string | null {
   }
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/**
+ * The same event as googleCalendarUrl, as an .ics file for Apple Calendar,
+ * Outlook and anything else that is not Google. A series repeats in UK time.
+ */
+export function icsCalendar(ev: EventRow): string | null {
+  const start = toDate(ev.start_datetime_utc);
+  if (!start) return null;
+  const end =
+    toDate(eventEnd(ev)?.iso) ?? new Date(start.getTime() + ESTIMATED_DURATION_MS);
+  const rrule = isSeries(ev)
+    ? calendarRrule(ev.series_start_utc ?? ev.start_datetime_utc, ev.recurrence_rule)
+    : null;
+  const url = `${SITE_URL}${eventUrl(ev)}`;
+  return buildIcs({
+    uid: `${ev.id}@islamiceventscalendar.co.uk`,
+    title: eventTitle(ev),
+    description: `${ev.source_caption?.trim() || ""}\n\n${url}`.trim(),
+    location: eventLocationLine(ev) || "United Kingdom",
+    url,
+    start,
+    end,
+    repeat: rrule ? { rrule, ukStamp } : null,
+  });
 }
 
 /** Group events by month for readable, crawlable listings. */

@@ -271,14 +271,27 @@ export default async function EventPage({ params }: Props) {
           {!isPast ? (
             <div className="mt-7 flex flex-col gap-2.5">
               {gcal ? (
-                <a
-                  href={gcal}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-12 items-center justify-center gap-2 bg-fill text-[14px] font-medium text-fill-text transition-opacity hover:opacity-85"
-                >
-                  Add to calendar
-                </a>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[13px] text-muted">Add to calendar</p>
+                  {/* Apple/Outlook get an .ics file, which opens the native
+                      "Add to Calendar" sheet on iPhone; Google gets its own link. */}
+                  <div className="flex gap-2.5">
+                    <a
+                      href={`${eventUrl(event)}/calendar.ics`}
+                      className="flex h-12 flex-1 items-center justify-center bg-fill text-[14px] font-medium text-fill-text transition-opacity hover:opacity-85"
+                    >
+                      Apple / Outlook
+                    </a>
+                    <a
+                      href={gcal}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-12 flex-1 items-center justify-center bg-fill text-[14px] font-medium text-fill-text transition-opacity hover:opacity-85"
+                    >
+                      Google
+                    </a>
+                  </div>
+                </div>
               ) : null}
               <ShareButtons url={canonical} title={title} />
               <p className="mt-1 text-[13px] leading-[1.6] text-muted">
