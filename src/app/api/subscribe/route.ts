@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { supabase } from "@/lib/supabaseClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,6 +90,14 @@ export async function POST(request: Request) {
     // subscriber's point of view, and saying so avoids leaking who is on
     // the list.
     if (error.code === "23505") {
+      // Someone who unsubscribed and signs up again is put back on the list.
+      if (supabaseAdmin) {
+        await supabaseAdmin
+          .from("subscribers")
+          .update({ unsubscribed_at: null, ...(record.city ? { city: record.city } : {}) })
+          .eq("email", record.email)
+          .not("unsubscribed_at", "is", null);
+      }
       return NextResponse.json({ ok: true });
     }
     console.error("Subscribe failed:", error.message);
