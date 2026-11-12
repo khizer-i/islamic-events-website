@@ -29,6 +29,9 @@ export type EventRow = {
   /** Not a column: set on a copy moved to one session of a series (see
    *  atSession), holding the series' first start. */
   series_start_utc?: string | null;
+  /** Not a column: the London area a London event was listed under, such as
+   *  "Palmers Green", once `city` has been rolled up to "London" (lib/london). */
+  area?: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -147,5 +150,5 @@ export function eventTitle(ev: EventRow): string {
 }
 
 export function eventLocationLine(ev: EventRow): string {
-  return [ev.venue_name, ev.city].filter(Boolean).join(", ");
+  return [ev.venue_name, ev.area, ev.city].filter(Boolean).join(", ");
 }

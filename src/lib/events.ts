@@ -22,6 +22,7 @@ import {
 
 import { SITE_URL } from "./brand";
 import { buildIcs } from "./ics";
+import { LONDON, londonArea } from "./london";
 
 // Kept here as well as in ./brand, as most pages import it from here.
 export { SITE_URL };
@@ -87,12 +88,16 @@ function tidyCity(value: string | null): string | null {
 }
 
 function cleanRow(ev: EventRow): EventRow {
+  const city = tidyCity(ev.city);
+  // Every London area is filed under London; the area is kept for display.
+  const area = londonArea(city);
   return {
     ...ev,
     title: cleanText(ev.title),
     organiser: cleanText(ev.organiser),
     venue_name: cleanText(ev.venue_name),
-    city: tidyCity(ev.city),
+    city: area === null ? city : LONDON,
+    area: area || null,
     notes: cleanText(ev.notes),
     source_caption: cleanText(ev.source_caption),
     tags:

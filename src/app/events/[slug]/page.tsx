@@ -232,6 +232,9 @@ export default async function EventPage({ params }: Props) {
 
             {event.city ? (
               <Row label="City">
+                {event.area ? (
+                  <span className="font-display text-[17px] font-medium">{event.area}, </span>
+                ) : null}
                 <Link
                   href={cityUrl(event.city)}
                   className="font-display text-[17px] font-medium text-accent hover:underline"

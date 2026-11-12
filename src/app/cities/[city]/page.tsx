@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import EventCard from "@/components/EventCard";
 import SubscribeForm from "@/components/SubscribeForm";
+import { LONDON, isLondonAreaSlug } from "@/lib/london";
 import { JsonLd, breadcrumbJsonLd, eventListJsonLd } from "@/lib/structured-data";
 import {
   SITE_URL,
@@ -58,6 +59,9 @@ export default async function CityPage({ params }: Props) {
   const { city: slug } = await params;
   const city = await getCityBySlug(slug);
 
+  // London areas used to have their own pages (/cities/ilford); send them,
+  // and anything Google kept, to London.
+  if (!city && isLondonAreaSlug(slug)) permanentRedirect(cityUrl(LONDON));
   if (!city) notFound();
 
   const { upcoming, past } = await getEventsInCity(city.name);
