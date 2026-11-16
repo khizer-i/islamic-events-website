@@ -409,6 +409,7 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [company, setCompany] = useState(""); // honeypot
+  const [notifyEmail, setNotifyEmail] = useState("");
   const [captcha, setCaptcha] = useState(() => (siteKey ? "" : "dev"));
 
   const captchaBox = useRef<HTMLDivElement>(null);
@@ -555,6 +556,7 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
           : NO_REPEAT,
         description: caption,
         company,
+        notifyEmail,
       });
       if (ok) {
         setStage("done");
@@ -604,7 +606,8 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
           </h2>
           <p className="max-w-lg text-[14px] leading-[1.6] text-muted">
             It will be checked by a person and usually appears on the calendar
-            the same day. There&rsquo;s nothing else you need to do.
+            the same day. There&rsquo;s nothing else you need to do
+            {notifyEmail.trim() ? ", and we\u2019ll email you the link once it\u2019s live" : ""}.
           </p>
           <button
             type="button"
@@ -748,6 +751,22 @@ export default function SubmitEventForm({ siteKey }: { siteKey: string }) {
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 className="w-full border border-rule-strong bg-paper px-3 py-2.5 text-[14px] leading-[1.55] text-ink placeholder:text-faint"
+              />
+            </Field>
+
+            <Field
+              id="f-notify"
+              label="Email me when it's live"
+              hint="Optional. We'll send one email with the link to your event, then delete your address. It isn't added to any mailing list."
+            >
+              <input
+                id="f-notify"
+                type="email"
+                autoComplete="email"
+                value={notifyEmail}
+                onChange={(e) => setNotifyEmail(e.target.value)}
+                placeholder="you@example.com"
+                className={inputClass}
               />
             </Field>
 

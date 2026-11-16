@@ -41,13 +41,14 @@ export async function POST(request: Request) {
     return jsonError(400, "Invalid request.");
   }
 
-  const { token, image, fields, repeat, description, company } = (body ?? {}) as {
+  const { token, image, fields, repeat, description, company, notifyEmail } = (body ?? {}) as {
     token?: unknown;
     image?: unknown;
     fields?: unknown;
     repeat?: unknown;
     description?: unknown;
     company?: unknown;
+    notifyEmail?: unknown;
   };
 
   // Honeypot filled in: report success so the bot learns nothing.
@@ -72,6 +73,15 @@ export async function POST(request: Request) {
     clean[key] = typeof v === "string" ? v.trim().slice(0, 200) : "";
   }
 
+  // Optional "email me when it's live". Checked here and again by the bot.
+  let notify_email: string | undefined;
+  if (typeof notifyEmail === "string" && notifyEmail.trim() !== "") {
+    notify_email = notifyEmail.trim().toLowerCase();
+    if (notify_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(notify_email)) {
+      return jsonError(400, "That email address doesn't look right. Please check it, or leave it blank.");
+    }
+  }
+
   if (!clean.title) return jsonError(400, "Please give the event a title.");
   if (!clean.start_date) return jsonError(400, "Please give the date of the event.");
 
@@ -86,6 +96,7 @@ export async function POST(request: Request) {
       ...(repeat && typeof repeat === "object" ? { repeat: cleanRepeat(repeat) } : {}),
       description:
         typeof description === "string" ? description.slice(0, 3000) : "",
+      ...(notify_email ? { notify_email } : {}),
     },
     clientIp(request),
     25_000
